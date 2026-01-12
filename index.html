@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>InfinityDrop | ZEN</title>
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -15,143 +15,211 @@
             --border: #222222;
             --text-main: #e5e5e5;
             --text-dim: #666666;
-            --accent: #ffffff; /* Stealth Mode: White accent */
-            --success: #333; /* Minimal green usually, but sticking to stealth */
             --incoming: #1a1a1a;
             --outgoing: #262626;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         
+        /* FULL HEIGHT FIX FOR MOBILE */
         body { 
             background: var(--bg); 
             color: var(--text-main); 
-            height: 100vh; 
+            height: 100dvh; /* Dynamic Height */
+            width: 100vw;
             display: flex; 
             flex-direction: column; 
             overflow: hidden;
         }
 
-        /* --- HEADER --- */
+        /* --- HEADER (Fixed Top) --- */
         header {
+            flex: 0 0 auto;
             padding: 15px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid var(--border);
-            background: rgba(5,5,5,0.8);
-            backdrop-filter: blur(10px);
+            background: rgba(5,5,5,0.95);
             z-index: 10;
         }
         
-        h1 { font-size: 0.9rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
+        h1 { font-size: 0.95rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
         .disconnect-btn {
             background: transparent; border: 1px solid var(--border); color: var(--text-dim);
             padding: 6px 12px; font-size: 0.7rem; border-radius: 4px; cursor: pointer; transition: 0.2s;
         }
         .disconnect-btn:hover { border-color: #444; color: white; }
 
-        /* --- MAIN CONTENT --- */
-        .app-content { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+        /* --- CONTENT AREA (Flex Grow) --- */
+        .app-content { 
+            flex: 1 1 auto; 
+            display: flex; 
+            flex-direction: column; 
+            position: relative; 
+            overflow: hidden; 
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+        }
 
         /* TABS */
-        .tabs { display: flex; border-bottom: 1px solid var(--border); }
+        .tabs { display: flex; border-bottom: 1px solid var(--border); flex: 0 0 auto; }
         .tab-btn {
             flex: 1; background: transparent; border: none; color: var(--text-dim);
             padding: 15px; font-size: 0.8rem; font-weight: 500; cursor: pointer; transition: 0.2s;
         }
-        .tab-btn.active { color: white; background: var(--surface); }
+        .tab-btn.active { color: white; background: var(--surface); border-bottom: 2px solid white; }
 
-        /* VIEWS */
-        .view-section { flex: 1; display: none; flex-direction: column; overflow: hidden; }
+        /* VIEW SECTIONS */
+        .view-section { 
+            flex: 1; 
+            display: none; 
+            flex-direction: column; 
+            overflow: hidden; 
+            position: relative;
+        }
         .view-section.active { display: flex; }
 
-        /* QR & ID PANEL (Overlay) */
+        /* --- QR & CONNECT OVERLAY --- */
         #connect-overlay {
             position: absolute; inset: 0; background: var(--bg); z-index: 20;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            display: flex; flex-direction: column; overflow-y: auto;
             padding: 20px; gap: 20px; text-align: center;
         }
-        #qr-container { 
-            padding: 15px; background: white; border-radius: 4px; 
-            filter: grayscale(100%); opacity: 0.9; transition: 0.2s;
-        }
-        #qr-container:hover { filter: grayscale(0%); opacity: 1; }
 
-        .id-display {
-            font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; letter-spacing: 2px;
-            color: var(--text-dim); border: 1px solid var(--border); padding: 10px 20px; border-radius: 8px;
+        .qr-box {
+            background: white; padding: 15px; border-radius: 8px; margin: 0 auto;
+            width: fit-content; filter: grayscale(100%); transition: 0.3s;
+        }
+        .qr-box:hover { filter: grayscale(0%); }
+
+        .info-pill {
+            display: inline-flex; align-items: center; gap: 10px;
+            background: var(--surface); border: 1px solid var(--border);
+            padding: 8px 16px; border-radius: 50px; font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem; color: white; margin: 0 auto;
         }
 
-        /* CHAT UI */
-        .chat-history { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
-        .msg { max-width: 80%; padding: 12px 16px; border-radius: 12px; font-size: 0.9rem; line-height: 1.4; position: relative; }
+        .manual-input-group {
+            display: flex; gap: 10px; max-width: 300px; margin: 10px auto 0;
+        }
+        .manual-input {
+            background: var(--surface); border: 1px solid var(--border); color: white;
+            padding: 12px; border-radius: 8px; outline: none; font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase; width: 100%;
+        }
+        .manual-input:focus { border-color: #555; }
+        
+        .action-btn {
+            background: white; color: black; border: none; padding: 0 20px; border-radius: 8px;
+            font-weight: 600; cursor: pointer; font-size: 0.9rem;
+        }
+
+        /* --- CHAT UI --- */
+        .chat-history { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px; 
+        }
+        .msg { max-width: 85%; padding: 12px 16px; border-radius: 12px; font-size: 0.95rem; line-height: 1.4; position: relative; word-wrap: break-word; }
         .msg-in { align-self: flex-start; background: var(--incoming); color: #ccc; border-bottom-left-radius: 2px; }
         .msg-out { align-self: flex-end; background: var(--outgoing); color: white; border-bottom-right-radius: 2px; }
         
         .typing-indicator { 
-            font-size: 0.7rem; color: var(--text-dim); margin-left: 20px; margin-bottom: 10px; height: 15px; 
-            opacity: 0; transition: opacity 0.2s; font-style: italic;
+            font-size: 0.7rem; color: var(--text-dim); margin-left: 20px; margin-bottom: 5px; height: 15px; 
+            opacity: 0; transition: opacity 0.2s; font-style: italic; flex: 0 0 auto;
         }
         .typing-indicator.show { opacity: 1; }
 
         .chat-input-area {
-            padding: 15px; border-top: 1px solid var(--border); display: flex; gap: 10px; background: var(--bg);
+            flex: 0 0 auto; /* Don't shrink */
+            padding: 15px; border-top: 1px solid var(--border); 
+            display: flex; gap: 10px; background: var(--bg);
         }
         textarea {
             flex: 1; background: var(--surface); border: 1px solid var(--border); color: white;
-            padding: 12px; border-radius: 8px; resize: none; height: 46px; outline: none; font-size: 0.9rem;
+            padding: 12px; border-radius: 8px; resize: none; height: 50px; outline: none; font-size: 1rem;
         }
         textarea:focus { border-color: #444; }
         .send-btn {
-            background: white; color: black; border: none; width: 46px; height: 46px; border-radius: 8px; font-weight: bold; cursor: pointer;
+            background: white; color: black; border: none; width: 50px; height: 50px; 
+            border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; 
+            align-items: center; justify-content: center;
         }
 
-        /* FILE UI */
+        /* --- FILE UI --- */
         .drop-zone {
-            margin: 20px; border: 1px dashed var(--border); border-radius: 12px; height: 120px;
+            margin: 20px; border: 1px dashed var(--border); border-radius: 12px; height: 140px;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             color: var(--text-dim); cursor: pointer; transition: 0.2s; position: relative;
+            background: rgba(255,255,255,0.02);
         }
         .drop-zone:hover { border-color: #555; background: var(--surface); color: white; }
         .drop-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 
         .file-list { flex: 1; overflow-y: auto; padding: 0 20px 20px; }
         .file-item {
-            background: var(--surface); border: 1px solid var(--border); padding: 15px; border-radius: 8px; margin-bottom: 10px;
+            background: var(--surface); border: 1px solid var(--border); padding: 15px; 
+            border-radius: 8px; margin-bottom: 10px;
         }
         .progress-bar { height: 2px; background: #222; margin-top: 10px; width: 100%; }
         .progress-fill { height: 100%; background: white; width: 0%; transition: width 0.1s linear; }
 
-        /* STATUS BAR */
+        /* --- STATUS BAR (Fixed Bottom) --- */
         .status-bar {
-            padding: 8px 20px; font-size: 0.7rem; font-family: 'JetBrains Mono', monospace;
+            flex: 0 0 auto;
+            padding: 10px 20px; 
+            padding-bottom: max(10px, env(safe-area-inset-bottom)); /* iPhone Home Bar Safe Area */
+            font-size: 0.75rem; font-family: 'JetBrains Mono', monospace;
             color: var(--text-dim); border-top: 1px solid var(--border); background: var(--bg);
             display: flex; justify-content: space-between; align-items: center;
         }
-        .status-dot { width: 6px; height: 6px; background: #333; border-radius: 50%; display: inline-block; margin-right: 6px; }
-        .status-dot.online { background: white; box-shadow: 0 0 8px rgba(255,255,255,0.2); }
+        .status-dot { width: 6px; height: 6px; background: #333; border-radius: 50%; display: inline-block; margin-right: 8px; }
+        .status-dot.online { background: #4ade80; box-shadow: 0 0 8px rgba(74, 222, 128, 0.2); }
         .status-dot.busy { background: #3b82f6; }
 
         .hidden { display: none !important; }
+        
+        /* Utility */
+        .divider { height: 1px; background: var(--border); width: 100%; margin: 20px 0; }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>InfinityDrop <span style="font-weight:300; opacity:0.5">ZEN</span></h1>
+    <h1>InfinityDrop <span style="font-weight:300; opacity:0.5; font-size:0.8em">ZEN</span></h1>
     <button class="disconnect-btn hidden" id="btn-disconnect" onclick="doDisconnect()">DISCONNECT</button>
 </header>
 
 <div class="app-content">
     
     <div id="connect-overlay">
-        <div style="font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">Scan to Auto-Connect</div>
-        <div id="qr-container"></div>
-        <div style="font-size: 0.8rem; color: var(--text-dim); margin-top:20px;">YOUR ID</div>
-        <div class="id-display" id="my-id-display">...</div>
-        <div style="font-size: 0.7rem; color: #444; max-width: 250px; line-height: 1.4;">
-            Waiting for partner...<br>Scan this QR on other device to link instantly.
+        <div style="margin-top:20px;">
+            <div id="qr-container" class="qr-box"></div>
+            <div style="font-size: 0.75rem; color: var(--text-dim); margin-top:10px;">SCAN TO CONNECT</div>
+        </div>
+
+        <div class="info-pill">
+            <span style="color:#666">ID:</span> <span id="my-id-display">...</span>
+            <span style="border-left:1px solid #333; margin:0 10px; height:12px;"></span>
+            <span style="color:#666">PIN:</span> <span id="my-pin-display" style="color:white">...</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <div style="width:100%; max-width:300px; margin:0 auto;">
+            <div style="font-size: 0.75rem; color: var(--text-dim); margin-bottom:10px; text-align:left;">CONNECT MANUALLY</div>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <input type="text" id="manual-partner-id" class="manual-input" placeholder="Partner ID">
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="manual-pin" class="manual-input" placeholder="PIN" style="width:80px; text-align:center">
+                    <button class="action-btn" onclick="manualConnect()" style="flex:1;">CONNECT</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -164,22 +232,22 @@
         <div id="view-files" class="view-section active">
             <div class="drop-zone">
                 <input type="file" id="file-input" multiple>
-                <div style="font-size: 1.5rem; margin-bottom: 8px;">+</div>
-                <div style="font-size: 0.8rem;">TAP TO UPLOAD</div>
+                <div style="font-size: 2rem; margin-bottom: 10px; font-weight:300;">+</div>
+                <div style="font-size: 0.8rem; letter-spacing:1px;">TAP TO UPLOAD</div>
             </div>
             <div id="file-queue" class="file-list"></div>
         </div>
 
         <div id="view-text" class="view-section">
             <div id="chat-history" class="chat-history">
-                <div style="text-align:center; color:#333; font-size:0.75rem; margin-top:auto;">
-                    End-to-End Encrypted Tunnel
+                <div style="text-align:center; color:#333; font-size:0.75rem; margin-top:auto; margin-bottom:10px;">
+                    Messages are encrypted & not saved.
                 </div>
             </div>
             <div class="typing-indicator" id="typing-indicator">Partner is typing...</div>
             <div class="chat-input-area">
-                <textarea id="text-input" placeholder="Type a message..."></textarea>
-                <button class="send-btn" onclick="sendText()">></button>
+                <textarea id="text-input" placeholder="Message..."></textarea>
+                <button class="send-btn" onclick="sendText()">➤</button>
             </div>
         </div>
     </div>
@@ -187,8 +255,11 @@
 </div>
 
 <div class="status-bar">
-    <div><span id="status-dot" class="status-dot"></span><span id="status-text">Initializing...</span></div>
-    <div id="network-stats">RELAY: EMQX</div>
+    <div style="display:flex; align-items:center;">
+        <span id="status-dot" class="status-dot"></span>
+        <span id="status-text">Initializing...</span>
+    </div>
+    <div id="network-stats" style="opacity:0.5">RELAY: EMQX</div>
 </div>
 
 <script>
@@ -197,48 +268,49 @@
     const CHUNK_SIZE = 45 * 1024;
     
     let client, cryptoKey;
-    let myId = Math.random().toString(36).substr(2, 6).toUpperCase();
-    let partnerId = null;
-    let sharedKeyRaw = null; // The raw password string
+    // Generate simple 4-digit ID and 4-digit PIN for ease of typing
+    let myId = Math.floor(1000 + Math.random() * 9000).toString();
+    let myPin = Math.floor(1000 + Math.random() * 9000).toString();
     
+    let partnerId = null;
     let fileRegistry = {};
     let isSending = false;
     let typingTimeout = null;
 
-    // --- 2. STARTUP LOGIC ---
+    // --- 2. STARTUP ---
     window.onload = () => {
-        // Check URL for "Magic Link" (Format: #ID|KEY)
-        const hash = window.location.hash.substring(1); // Remove #
-        
+        // Display ID and PIN
+        document.getElementById('my-id-display').innerText = myId;
+        document.getElementById('my-pin-display').innerText = myPin;
+
+        // Check for QR Scan (URL Hash)
+        const hash = window.location.hash.substring(1); 
         if(hash && hash.includes('|')) {
-            // WE ARE THE RECEIVER (Scanned QR)
+            // Auto Connect Mode
             const parts = hash.split('|');
-            partnerId = parts[0];
-            sharedKeyRaw = parts[1];
-            
-            setStatus('busy', `Auto-Connecting to ${partnerId}...`);
-            initialize(sharedKeyRaw, true); // True = auto-connect mode
+            document.getElementById('manual-partner-id').value = parts[0];
+            document.getElementById('manual-pin').value = parts[1];
+            manualConnect();
         } else {
-            // WE ARE THE INITIATOR (Show QR)
-            sharedKeyRaw = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8); // Generate random key
-            document.getElementById('my-id-display').innerText = myId;
+            // Host Mode
             generateQR();
-            initialize(sharedKeyRaw, false);
+            initialize(myPin); // Init with MY pin waiting for connection
         }
     };
 
     function generateQR() {
-        // Create Magic Link: current_url#MY_ID|KEY
-        const link = `${window.location.origin}${window.location.pathname}#${myId}|${sharedKeyRaw}`;
+        // Link format: url#PARTNER_ID|PARTNER_PIN
+        const link = `${window.location.origin}${window.location.pathname}#${myId}|${myPin}`;
         new QRCode(document.getElementById("qr-container"), {
-            text: link, width: 160, height: 160,
+            text: link, width: 140, height: 140,
             colorDark : "#000000", colorLight : "#ffffff",
             correctLevel : QRCode.CorrectLevel.L
         });
     }
 
-    async function initialize(keyString, autoConnect) {
-        // Generate Crypto Key from String
+    // --- 3. CONNECTION LOGIC ---
+    async function initialize(keyString) {
+        // Derive Key
         const enc = new TextEncoder();
         const keyMat = await window.crypto.subtle.importKey("raw", enc.encode(keyString), "PBKDF2", false, ["deriveKey"]);
         cryptoKey = await window.crypto.subtle.deriveKey(
@@ -246,125 +318,121 @@
             keyMat, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]
         );
 
-        // Connect to MQTT
         setStatus('busy', 'Connecting to Network...');
-        client = mqtt.connect(BROKER, { keepalive: 60, clientId: 'zen_' + myId, clean: true });
+        client = mqtt.connect(BROKER, { keepalive: 60, clientId: 'zen_' + Math.random().toString(16).substr(2, 8), clean: true });
 
         client.on('connect', () => {
-            setStatus('online', 'Network Ready. Waiting for Peer...');
-            
-            // Subscribe to my channel
-            client.subscribe(`zen/${myId}/#`);
-
-            if(autoConnect) {
-                // If we scanned QR, initiate handshake immediately
-                performHandshake();
-            }
+            setStatus('online', 'Online. Waiting for partner...');
+            client.subscribe(`zen/${myId}/#`); // Listen to my ID
         });
 
         client.on('message', handleMessage);
-        client.on('error', () => setStatus('busy', 'Network Error. Retrying...'));
+        client.on('error', () => setStatus('busy', 'Retrying Network...'));
     }
 
-    // --- 3. CONNECTION HANDSHAKE ---
-    function performHandshake() {
-        if(!partnerId) return;
+    async function manualConnect() {
+        const pId = document.getElementById('manual-partner-id').value.trim();
+        const pPin = document.getElementById('manual-pin').value.trim();
+        
+        if(!pId || !pPin) return alert("Enter Partner ID and PIN");
+        
+        partnerId = pId;
+        
+        // Re-initialize crypto with PARTNER'S PIN (Shared Secret)
+        await initialize(pPin);
+        
         setStatus('busy', `Dialing ${partnerId}...`);
+        
+        // Send Handshake
         publish(partnerId, 'signal', { type: 'hello', from: myId });
     }
 
+    // --- 4. SIGNALING HANDLER ---
     async function handleMessage(topic, payload) {
-        const type = topic.split('/').pop(); // signal | data | typing
+        const type = topic.split('/').pop();
 
         if(type === 'signal') {
             const data = JSON.parse(payload.toString());
             if(data.type === 'hello') {
+                // Incoming connection!
                 partnerId = data.from;
+                // If I am the host, I need to make sure I reply
                 publish(partnerId, 'signal', { type: 'welcome', from: myId });
                 enterSecureMode();
             } else if(data.type === 'welcome') {
+                // Partner accepted
                 partnerId = data.from;
                 enterSecureMode();
             } else if(data.type === 'bye') {
-                doDisconnect(false); // Passive disconnect
-                alert('Partner disconnected');
+                alert('Partner Disconnected');
+                window.location.reload();
             }
         } 
-        else if (type === 'data') {
-            processData(payload);
-        }
-        else if (type === 'typing') {
-            showTyping();
-        }
+        else if (type === 'data') { processData(payload); }
+        else if (type === 'typing') { showTyping(); }
     }
 
     function enterSecureMode() {
         document.getElementById('connect-overlay').classList.add('hidden');
         document.getElementById('main-interface').classList.remove('hidden');
         document.getElementById('btn-disconnect').classList.remove('hidden');
-        setStatus('online', `Connected securely to ${partnerId}`);
-    }
-
-    function doDisconnect(notify = true) {
-        if(notify && partnerId) publish(partnerId, 'signal', { type: 'bye' });
+        setStatus('online', `Connected to ${partnerId}`);
         
-        // Reset State
-        window.location.hash = ""; // Clear hash
-        window.location.reload(); // Simple reload to generate new fresh keys/ID
+        // Update MQTT Subscription to listen to my ID still (already done)
     }
 
-    // --- 4. DATA ENGINE ---
+    function doDisconnect() {
+        if(partnerId) publish(partnerId, 'signal', { type: 'bye' });
+        window.location.hash = "";
+        window.location.reload();
+    }
+
+    // --- 5. DATA ENGINE (Chat & File) ---
     async function processData(buffer) {
         const flag = buffer[0];
         const data = buffer.slice(1);
 
-        // FLAG 3: TEXT
-        if(flag === 3) {
-            try {
+        try {
+            if(flag === 3) { // TEXT
                 const dec = await decrypt(data);
                 const text = new TextDecoder().decode(dec);
                 addMessage(text, 'in');
-                // Auto-switch tab if inactive
-                if(document.getElementById('view-text').style.display === 'none') {
-                    // Optional: Badge notification
-                }
-            } catch(e) {}
-        }
-        // FLAG 0: HEADER
-        else if(flag === 0) {
-            const dec = await decrypt(data);
-            const meta = JSON.parse(new TextDecoder().decode(dec));
-            fileRegistry[meta.fid] = { meta, buffer: [], received: 0 };
-            createFileUI(meta.fid, meta.name, meta.size);
-            setStatus('busy', `Receiving ${meta.name}...`);
-        }
-        // FLAG 1: CHUNK
-        else if(flag === 1) {
-            const fId = Object.keys(fileRegistry)[0];
-            const f = fileRegistry[fId];
-            if(f) {
+            }
+            else if(flag === 0) { // HEADER
                 const dec = await decrypt(data);
-                f.buffer.push(dec);
-                f.received += dec.byteLength;
-                updateFileUI(fId, (f.received/f.meta.size)*100);
+                const meta = JSON.parse(new TextDecoder().decode(dec));
+                fileRegistry[meta.fid] = { meta, buffer: [], received: 0 };
+                createFileUI(meta.fid, meta.name, meta.size);
+                setStatus('busy', `Receiving ${meta.name}...`);
             }
-        }
-        // FLAG 2: END
-        else if(flag === 2) {
-            const fId = Object.keys(fileRegistry)[0];
-            const f = fileRegistry[fId];
-            if(f) {
-                const blob = new Blob(f.buffer, { type: f.meta.type });
-                const url = URL.createObjectURL(blob);
-                finishFileUI(fId, url, f.meta.name);
-                delete fileRegistry[fId];
-                setStatus('online', 'File Received');
+            else if(flag === 1) { // CHUNK
+                const fId = Object.keys(fileRegistry)[0];
+                const f = fileRegistry[fId];
+                if(f) {
+                    const dec = await decrypt(data);
+                    f.buffer.push(dec);
+                    f.received += dec.byteLength;
+                    updateFileUI(fId, (f.received/f.meta.size)*100);
+                }
             }
+            else if(flag === 2) { // END
+                const fId = Object.keys(fileRegistry)[0];
+                const f = fileRegistry[fId];
+                if(f) {
+                    const blob = new Blob(f.buffer, { type: f.meta.type });
+                    const url = URL.createObjectURL(blob);
+                    finishFileUI(fId, url, f.meta.name);
+                    delete fileRegistry[fId];
+                    setStatus('online', 'Transfer Complete');
+                }
+            }
+        } catch(e) {
+            console.error("Decryption Error", e);
         }
     }
 
-    // --- 5. SENDING LOGIC ---
-    // TYPING INDICATOR
+    // --- 6. SEND ACTIONS ---
+    // Chat
     document.getElementById('text-input').addEventListener('input', () => {
         if(partnerId) client.publish(`zen/${partnerId}/typing`, '1');
     });
@@ -376,7 +444,6 @@
         typingTimeout = setTimeout(() => el.classList.remove('show'), 2000);
     }
 
-    // SEND TEXT
     async function sendText() {
         const input = document.getElementById('text-input');
         const text = input.value.trim();
@@ -387,13 +454,11 @@
 
         const enc = await encrypt(new TextEncoder().encode(text));
         const packet = new Uint8Array(enc.byteLength + 1);
-        packet[0] = 3; 
-        packet.set(new Uint8Array(enc), 1);
-        
+        packet[0] = 3; packet.set(new Uint8Array(enc), 1);
         client.publish(`zen/${partnerId}/data`, packet);
     }
 
-    // SEND FILE
+    // Files
     document.getElementById('file-input').addEventListener('change', async (e) => {
         if(isSending) return;
         const file = e.target.files[0];
@@ -417,8 +482,8 @@
             if(offset >= file.size) {
                 client.publish(`zen/${partnerId}/data`, new Uint8Array([2])); // End
                 isSending = false;
-                finishFileUI(fid, null, null, true); // Sent
-                setStatus('online', 'Transfer Complete');
+                finishFileUI(fid, null, null, true);
+                setStatus('online', 'Sent');
                 return;
             }
             const slice = await file.slice(offset, offset + CHUNK_SIZE).arrayBuffer();
@@ -437,7 +502,7 @@
         processChunk();
     });
 
-    // --- 6. UTILITIES ---
+    // --- 7. HELPERS ---
     async function encrypt(data) {
         const iv = window.crypto.getRandomValues(new Uint8Array(12));
         const enc = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, cryptoKey, data);
@@ -463,7 +528,6 @@
         document.getElementById('status-text').innerText = text;
     }
 
-    // --- UI HELPERS ---
     function switchTab(tab) {
         document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
         document.getElementById(`view-${tab}`).classList.add('active');
@@ -490,7 +554,7 @@
                 <span style="color:#666">${(size/1024/1024).toFixed(2)} MB</span>
             </div>
             <div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div>
-            <button class="disconnect-btn hidden" style="margin-top:10px; width:100%;">DOWNLOAD</button>
+            <button class="action-btn hidden" style="margin-top:10px; width:100%; font-size:0.8rem; padding:8px;">SAVE</button>
         `;
         document.getElementById('file-queue').prepend(div);
     }
@@ -504,14 +568,10 @@
         const el = document.getElementById(`file-${fid}`);
         if(!el) return;
         updateFileUI(fid, 100);
-        
         if(!isSender) {
             const btn = el.querySelector('button');
             btn.classList.remove('hidden');
-            btn.innerText = "SAVE FILE";
-            btn.onclick = () => {
-                const a = document.createElement('a'); a.href = url; a.download = name; a.click();
-            };
+            btn.onclick = () => { const a = document.createElement('a'); a.href = url; a.download = name; a.click(); };
         }
     }
 </script>
