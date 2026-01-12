@@ -2,307 +2,381 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InfinityDrop | Turbo + Text + QR</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>InfinityDrop | ZEN</title>
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #0f172a; --surface: #1e293b; --border: #334155; --primary: #f8fafc; --accent: #38bdf8; --success: #4ade80; --incoming: #334155; --outgoing: #0ea5e9; }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background: var(--bg); color: var(--primary); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        .app-container { width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 20px; height: 90vh; max-height: 800px; }
-        
-        /* HEADER */
-        header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-        h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em; }
-        
-        /* PANELS */
-        .panel { background: var(--surface); padding: 24px; border-radius: 16px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-        .label { font-size: 0.75rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
-        
-        input[type="text"], input[type="password"], select { 
-            width: 100%; background: #0f172a; border: 1px solid var(--border); color: white; 
-            padding: 14px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; outline: none; transition: 0.2s;
+        :root {
+            --bg: #050505;
+            --surface: #111111;
+            --surface-hover: #1a1a1a;
+            --border: #222222;
+            --text-main: #e5e5e5;
+            --text-dim: #666666;
+            --accent: #ffffff; /* Stealth Mode: White accent */
+            --success: #333; /* Minimal green usually, but sticking to stealth */
+            --incoming: #1a1a1a;
+            --outgoing: #262626;
         }
-        input:focus, select:focus { border-color: var(--accent); }
-        
-        .btn { width: 100%; padding: 14px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; background: var(--primary); color: #0f172a; transition: 0.2s; }
-        .btn:hover { opacity: 0.9; }
 
-        /* TABS (New) */
-        .tabs { display: flex; gap: 10px; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 10px; }
-        .tab-btn { background: transparent; border: none; color: #94a3b8; cursor: pointer; font-weight: 600; padding: 5px 10px; border-radius: 6px; }
-        .tab-btn.active { background: #334155; color: white; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        body { 
+            background: var(--bg); 
+            color: var(--text-main); 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden;
+        }
+
+        /* --- HEADER --- */
+        header {
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            background: rgba(5,5,5,0.8);
+            backdrop-filter: blur(10px);
+            z-index: 10;
+        }
+        
+        h1 { font-size: 0.9rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
+        .disconnect-btn {
+            background: transparent; border: 1px solid var(--border); color: var(--text-dim);
+            padding: 6px 12px; font-size: 0.7rem; border-radius: 4px; cursor: pointer; transition: 0.2s;
+        }
+        .disconnect-btn:hover { border-color: #444; color: white; }
+
+        /* --- MAIN CONTENT --- */
+        .app-content { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+
+        /* TABS */
+        .tabs { display: flex; border-bottom: 1px solid var(--border); }
+        .tab-btn {
+            flex: 1; background: transparent; border: none; color: var(--text-dim);
+            padding: 15px; font-size: 0.8rem; font-weight: 500; cursor: pointer; transition: 0.2s;
+        }
+        .tab-btn.active { color: white; background: var(--surface); }
+
+        /* VIEWS */
+        .view-section { flex: 1; display: none; flex-direction: column; overflow: hidden; }
+        .view-section.active { display: flex; }
+
+        /* QR & ID PANEL (Overlay) */
+        #connect-overlay {
+            position: absolute; inset: 0; background: var(--bg); z-index: 20;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px; gap: 20px; text-align: center;
+        }
+        #qr-container { 
+            padding: 15px; background: white; border-radius: 4px; 
+            filter: grayscale(100%); opacity: 0.9; transition: 0.2s;
+        }
+        #qr-container:hover { filter: grayscale(0%); opacity: 1; }
+
+        .id-display {
+            font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; letter-spacing: 2px;
+            color: var(--text-dim); border: 1px solid var(--border); padding: 10px 20px; border-radius: 8px;
+        }
+
+        /* CHAT UI */
+        .chat-history { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+        .msg { max-width: 80%; padding: 12px 16px; border-radius: 12px; font-size: 0.9rem; line-height: 1.4; position: relative; }
+        .msg-in { align-self: flex-start; background: var(--incoming); color: #ccc; border-bottom-left-radius: 2px; }
+        .msg-out { align-self: flex-end; background: var(--outgoing); color: white; border-bottom-right-radius: 2px; }
+        
+        .typing-indicator { 
+            font-size: 0.7rem; color: var(--text-dim); margin-left: 20px; margin-bottom: 10px; height: 15px; 
+            opacity: 0; transition: opacity 0.2s; font-style: italic;
+        }
+        .typing-indicator.show { opacity: 1; }
+
+        .chat-input-area {
+            padding: 15px; border-top: 1px solid var(--border); display: flex; gap: 10px; background: var(--bg);
+        }
+        textarea {
+            flex: 1; background: var(--surface); border: 1px solid var(--border); color: white;
+            padding: 12px; border-radius: 8px; resize: none; height: 46px; outline: none; font-size: 0.9rem;
+        }
+        textarea:focus { border-color: #444; }
+        .send-btn {
+            background: white; color: black; border: none; width: 46px; height: 46px; border-radius: 8px; font-weight: bold; cursor: pointer;
+        }
 
         /* FILE UI */
-        .drop-zone { border: 2px dashed var(--border); border-radius: 12px; padding: 30px; text-align: center; cursor: pointer; position: relative; transition: 0.2s; background: rgba(255,255,255,0.02); }
-        .drop-zone:hover { border-color: var(--accent); background: rgba(56, 189, 248, 0.05); }
-        .file-item { background: #0f172a; border: 1px solid var(--border); padding: 12px; border-radius: 8px; margin-top: 10px; }
-        .progress-track { height: 6px; background: #334155; border-radius: 3px; overflow: hidden; margin-top: 8px; }
-        .progress-fill { height: 100%; width: 0%; background: var(--accent); transition: width 0.2s; }
+        .drop-zone {
+            margin: 20px; border: 1px dashed var(--border); border-radius: 12px; height: 120px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: var(--text-dim); cursor: pointer; transition: 0.2s; position: relative;
+        }
+        .drop-zone:hover { border-color: #555; background: var(--surface); color: white; }
+        .drop-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 
-        /* TEXT CHAT UI (New) */
-        .chat-box { flex: 1; overflow-y: auto; background: #0f172a; border: 1px solid var(--border); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 10px; min-height: 200px; }
-        .msg-bubble { max-width: 80%; padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; word-break: break-word; position: relative; }
-        .msg-in { align-self: flex-start; background: var(--incoming); color: #cbd5e1; border-bottom-left-radius: 2px; }
-        .msg-out { align-self: flex-end; background: var(--outgoing); color: white; border-bottom-right-radius: 2px; }
-        .copy-btn { position: absolute; top: -8px; right: -8px; background: var(--surface); border: 1px solid var(--border); color: #fff; border-radius: 50%; width: 24px; height: 24px; font-size: 0.7rem; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        
-        .input-area { display: flex; gap: 10px; margin-top: 10px; }
-        textarea { flex: 1; background: #0f172a; border: 1px solid var(--border); color: white; padding: 10px; border-radius: 8px; resize: none; height: 50px; outline: none; font-family: 'JetBrains Mono', monospace; }
+        .file-list { flex: 1; overflow-y: auto; padding: 0 20px 20px; }
+        .file-item {
+            background: var(--surface); border: 1px solid var(--border); padding: 15px; border-radius: 8px; margin-bottom: 10px;
+        }
+        .progress-bar { height: 2px; background: #222; margin-top: 10px; width: 100%; }
+        .progress-fill { height: 100%; background: white; width: 0%; transition: width 0.1s linear; }
 
-        /* QR CODE */
-        #qr-container { display: flex; justify-content: center; margin-top: 10px; background: white; padding: 10px; border-radius: 8px; width: fit-content; margin-left: auto; margin-right: auto; }
+        /* STATUS BAR */
+        .status-bar {
+            padding: 8px 20px; font-size: 0.7rem; font-family: 'JetBrains Mono', monospace;
+            color: var(--text-dim); border-top: 1px solid var(--border); background: var(--bg);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .status-dot { width: 6px; height: 6px; background: #333; border-radius: 50%; display: inline-block; margin-right: 6px; }
+        .status-dot.online { background: white; box-shadow: 0 0 8px rgba(255,255,255,0.2); }
+        .status-dot.busy { background: #3b82f6; }
 
         .hidden { display: none !important; }
-        .log-line { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: #64748b; margin-top: 4px; }
     </style>
 </head>
 <body>
 
-<div class="app-container">
-    <header>
-        <h1>InfinityDrop <span style="color:var(--accent)">TURBO</span></h1>
-        <div id="status-badge" style="font-size:0.75rem; color:#94a3b8; display:flex; align-items:center; gap:6px;">
-            <div style="width:8px; height:8px; background:#64748b; border-radius:50%" id="status-dot"></div>
-            <span id="status-text">Offline</span>
-        </div>
-    </header>
+<header>
+    <h1>InfinityDrop <span style="font-weight:300; opacity:0.5">ZEN</span></h1>
+    <button class="disconnect-btn hidden" id="btn-disconnect" onclick="doDisconnect()">DISCONNECT</button>
+</header>
 
-    <div id="panel-setup" class="panel">
-        <div>
-            <div class="label">1. Choose Relay Network</div>
-            <select id="broker-select">
-                <option value="wss://broker.emqx.io:8084/mqtt">EMQX Public (Global)</option>
-                <option value="wss://broker.hivemq.com:8000/mqtt">HiveMQ (Fast)</option>
-                <option value="wss://test.mosquitto.org:8081/mqtt">Mosquitto (Stable)</option>
-            </select>
+<div class="app-content">
+    
+    <div id="connect-overlay">
+        <div style="font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">Scan to Auto-Connect</div>
+        <div id="qr-container"></div>
+        <div style="font-size: 0.8rem; color: var(--text-dim); margin-top:20px;">YOUR ID</div>
+        <div class="id-display" id="my-id-display">...</div>
+        <div style="font-size: 0.7rem; color: #444; max-width: 250px; line-height: 1.4;">
+            Waiting for partner...<br>Scan this QR on other device to link instantly.
         </div>
-        <div>
-            <div class="label">2. Secure Password</div>
-            <input type="password" id="secret-pass" placeholder="Enter shared password">
-        </div>
-        <button class="btn" onclick="initialize()">Start Engine</button>
     </div>
 
-    <div id="panel-connect" class="panel hidden">
-        <div style="text-align: center;">
-            <div class="label">Scan to Connect</div>
-            <div id="qr-container"></div>
-            <div style="font-size: 0.7rem; color: #64748b; margin-top: 5px;">Or use ID below</div>
-        </div>
-
-        <div>
-            <div class="label">Your ID</div>
-            <input type="text" id="my-id" readonly>
-        </div>
-        <div>
-            <div class="label">Partner ID</div>
-            <input type="text" id="partner-id" placeholder="Enter ID or Scan QR">
-        </div>
-        <button class="btn" onclick="connectPeer()">Connect</button>
-    </div>
-
-    <div id="panel-transfer" class="panel hidden" style="flex:1;">
+    <div id="main-interface" class="hidden" style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
         <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('files')">Files</button>
-            <button class="tab-btn" onclick="switchTab('text')">Text / Clipboard</button>
+            <button class="tab-btn active" onclick="switchTab('files')">FILES</button>
+            <button class="tab-btn" onclick="switchTab('text')">CHAT</button>
         </div>
 
-        <div id="view-files">
+        <div id="view-files" class="view-section active">
             <div class="drop-zone">
-                <input type="file" id="file-input" multiple style="position:absolute; inset:0; opacity:0; cursor:pointer;">
-                <div style="font-size:2rem; margin-bottom:10px;">⚡</div>
-                <div style="font-weight:600;">Send Large Files</div>
+                <input type="file" id="file-input" multiple>
+                <div style="font-size: 1.5rem; margin-bottom: 8px;">+</div>
+                <div style="font-size: 0.8rem;">TAP TO UPLOAD</div>
             </div>
-            <div id="file-queue"></div>
+            <div id="file-queue" class="file-list"></div>
         </div>
 
-        <div id="view-text" class="hidden" style="display:flex; flex-direction:column; height:100%;">
-            <div id="chat-history" class="chat-box">
-                <div style="text-align:center; font-size:0.75rem; color:#64748b; margin-top:20px;">
-                    Secure Encrypted Clipboard<br>Messages are not saved on server
+        <div id="view-text" class="view-section">
+            <div id="chat-history" class="chat-history">
+                <div style="text-align:center; color:#333; font-size:0.75rem; margin-top:auto;">
+                    End-to-End Encrypted Tunnel
                 </div>
             </div>
-            <div class="input-area">
-                <textarea id="text-input" placeholder="Type or paste text here..."></textarea>
-                <button class="btn" style="width: auto; padding: 0 20px;" onclick="sendText()">➤</button>
+            <div class="typing-indicator" id="typing-indicator">Partner is typing...</div>
+            <div class="chat-input-area">
+                <textarea id="text-input" placeholder="Type a message..."></textarea>
+                <button class="send-btn" onclick="sendText()">></button>
             </div>
         </div>
     </div>
+
+</div>
+
+<div class="status-bar">
+    <div><span id="status-dot" class="status-dot"></span><span id="status-text">Initializing...</span></div>
+    <div id="network-stats">RELAY: EMQX</div>
 </div>
 
 <script>
-    // --- CONFIGURATION ---
-    const CHUNK_SIZE = 45 * 1024; // 45KB (Safe for all public brokers)
+    // --- 1. CONFIG & STATE ---
+    const BROKER = 'wss://broker.emqx.io:8084/mqtt';
+    const CHUNK_SIZE = 45 * 1024;
     
-    // --- STATE ---
     let client, cryptoKey;
     let myId = Math.random().toString(36).substr(2, 6).toUpperCase();
     let partnerId = null;
+    let sharedKeyRaw = null; // The raw password string
+    
     let fileRegistry = {};
     let isSending = false;
+    let typingTimeout = null;
 
-    // --- 1. INITIALIZATION ---
-    // Check for ID in URL (QR Code Logic)
+    // --- 2. STARTUP LOGIC ---
     window.onload = () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const pid = urlParams.get('partner');
-        if(pid) {
-            document.getElementById('partner-id').value = pid;
+        // Check URL for "Magic Link" (Format: #ID|KEY)
+        const hash = window.location.hash.substring(1); // Remove #
+        
+        if(hash && hash.includes('|')) {
+            // WE ARE THE RECEIVER (Scanned QR)
+            const parts = hash.split('|');
+            partnerId = parts[0];
+            sharedKeyRaw = parts[1];
+            
+            setStatus('busy', `Auto-Connecting to ${partnerId}...`);
+            initialize(sharedKeyRaw, true); // True = auto-connect mode
+        } else {
+            // WE ARE THE INITIATOR (Show QR)
+            sharedKeyRaw = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8); // Generate random key
+            document.getElementById('my-id-display').innerText = myId;
+            generateQR();
+            initialize(sharedKeyRaw, false);
         }
     };
 
-    async function initialize() {
-        const pass = document.getElementById('secret-pass').value;
-        const broker = document.getElementById('broker-select').value;
-        if(pass.length < 4) return alert("Password too short");
-
-        // Generate Encryption Key
-        const enc = new TextEncoder();
-        const keyMat = await window.crypto.subtle.importKey("raw", enc.encode(pass), "PBKDF2", false, ["deriveKey"]);
-        cryptoKey = await window.crypto.subtle.deriveKey(
-            { name: "PBKDF2", salt: enc.encode("TurboSalt"), iterations: 50000, hash: "SHA-256" },
-            keyMat, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]
-        );
-
-        document.getElementById('panel-setup').classList.add('hidden');
-        document.getElementById('status-text').innerText = "Connecting to Relay...";
-        
-        // Connect to MQTT
-        client = mqtt.connect(broker, { 
-            keepalive: 60, 
-            clientId: 'turbo_' + myId,
-            clean: true 
-        });
-
-        client.on('connect', () => {
-            updateStatus('online', 'Relay Connected');
-            document.getElementById('my-id').value = myId;
-            document.getElementById('panel-connect').classList.remove('hidden');
-            
-            // Generate QR Code
-            generateQR();
-
-            // Subscribe to my inbox
-            client.subscribe(`turbo/${myId}/#`);
-        });
-
-        client.on('message', handleMessage);
-        client.on('error', (e) => updateStatus('error', 'Connection Error'));
-    }
-
-    // --- 2. SIGNALING & QR ---
     function generateQR() {
-        // Creates a URL: current_page.html?partner=MY_ID
-        const link = window.location.href.split('?')[0] + '?partner=' + myId;
+        // Create Magic Link: current_url#MY_ID|KEY
+        const link = `${window.location.origin}${window.location.pathname}#${myId}|${sharedKeyRaw}`;
         new QRCode(document.getElementById("qr-container"), {
-            text: link,
-            width: 128,
-            height: 128,
-            colorDark : "#000000",
-            colorLight : "#ffffff",
+            text: link, width: 160, height: 160,
+            colorDark : "#000000", colorLight : "#ffffff",
             correctLevel : QRCode.CorrectLevel.L
         });
     }
 
-    function connectPeer() {
-        partnerId = document.getElementById('partner-id').value.trim().toUpperCase();
+    async function initialize(keyString, autoConnect) {
+        // Generate Crypto Key from String
+        const enc = new TextEncoder();
+        const keyMat = await window.crypto.subtle.importKey("raw", enc.encode(keyString), "PBKDF2", false, ["deriveKey"]);
+        cryptoKey = await window.crypto.subtle.deriveKey(
+            { name: "PBKDF2", salt: enc.encode("ZenSalt"), iterations: 50000, hash: "SHA-256" },
+            keyMat, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]
+        );
+
+        // Connect to MQTT
+        setStatus('busy', 'Connecting to Network...');
+        client = mqtt.connect(BROKER, { keepalive: 60, clientId: 'zen_' + myId, clean: true });
+
+        client.on('connect', () => {
+            setStatus('online', 'Network Ready. Waiting for Peer...');
+            
+            // Subscribe to my channel
+            client.subscribe(`zen/${myId}/#`);
+
+            if(autoConnect) {
+                // If we scanned QR, initiate handshake immediately
+                performHandshake();
+            }
+        });
+
+        client.on('message', handleMessage);
+        client.on('error', () => setStatus('busy', 'Network Error. Retrying...'));
+    }
+
+    // --- 3. CONNECTION HANDSHAKE ---
+    function performHandshake() {
         if(!partnerId) return;
-        
-        // Send handshake
+        setStatus('busy', `Dialing ${partnerId}...`);
         publish(partnerId, 'signal', { type: 'hello', from: myId });
-        document.getElementById('status-text').innerText = "Dialing...";
     }
 
     async function handleMessage(topic, payload) {
-        // Topic: turbo/{myId}/{type}
-        const type = topic.split('/').pop();
+        const type = topic.split('/').pop(); // signal | data | typing
 
         if(type === 'signal') {
             const data = JSON.parse(payload.toString());
             if(data.type === 'hello') {
                 partnerId = data.from;
-                document.getElementById('partner-id').value = partnerId;
                 publish(partnerId, 'signal', { type: 'welcome', from: myId });
-                startSession();
+                enterSecureMode();
             } else if(data.type === 'welcome') {
                 partnerId = data.from;
-                startSession();
+                enterSecureMode();
+            } else if(data.type === 'bye') {
+                doDisconnect(false); // Passive disconnect
+                alert('Partner disconnected');
             }
         } 
         else if (type === 'data') {
-            handleDataChunk(payload); // Payload is Binary Buffer
+            processData(payload);
+        }
+        else if (type === 'typing') {
+            showTyping();
         }
     }
 
-    function startSession() {
-        document.getElementById('panel-connect').classList.add('hidden');
-        document.getElementById('panel-transfer').classList.remove('hidden');
-        updateStatus('online', `Linked with ${partnerId}`);
+    function enterSecureMode() {
+        document.getElementById('connect-overlay').classList.add('hidden');
+        document.getElementById('main-interface').classList.remove('hidden');
+        document.getElementById('btn-disconnect').classList.remove('hidden');
+        setStatus('online', `Connected securely to ${partnerId}`);
     }
 
-    // --- 3. DATA HANDLER (TEXT + FILES) ---
-    async function handleDataChunk(buffer) {
+    function doDisconnect(notify = true) {
+        if(notify && partnerId) publish(partnerId, 'signal', { type: 'bye' });
+        
+        // Reset State
+        window.location.hash = ""; // Clear hash
+        window.location.reload(); // Simple reload to generate new fresh keys/ID
+    }
+
+    // --- 4. DATA ENGINE ---
+    async function processData(buffer) {
         const flag = buffer[0];
         const data = buffer.slice(1);
 
-        // FLAG 3: TEXT MESSAGE
+        // FLAG 3: TEXT
         if(flag === 3) {
             try {
                 const dec = await decrypt(data);
                 const text = new TextDecoder().decode(dec);
                 addMessage(text, 'in');
-                
-                // Notify user on tab
-                const textTab = document.getElementById('view-text');
-                if(textTab.classList.contains('hidden')) {
-                     document.querySelector('button[onclick="switchTab(\'text\')"]').innerText = "Text (New!)";
+                // Auto-switch tab if inactive
+                if(document.getElementById('view-text').style.display === 'none') {
+                    // Optional: Badge notification
                 }
-            } catch(e) { console.error("Text Decrypt Fail"); }
-            return;
+            } catch(e) {}
         }
-
-        // FLAG 0: File Header
-        if(flag === 0) { 
-            try {
-                const dec = await decrypt(data);
-                const meta = JSON.parse(new TextDecoder().decode(dec));
-                fileRegistry[meta.fid] = { meta, buffer: [], received: 0 };
-                createFileUI(meta.fid, meta.name, meta.size, 'download');
-            } catch(e) { console.error("Decrypt Header Fail"); }
-        } 
-        // FLAG 1: File Chunk
-        else if (flag === 1) { 
-            const fId = Object.keys(fileRegistry)[0]; 
+        // FLAG 0: HEADER
+        else if(flag === 0) {
+            const dec = await decrypt(data);
+            const meta = JSON.parse(new TextDecoder().decode(dec));
+            fileRegistry[meta.fid] = { meta, buffer: [], received: 0 };
+            createFileUI(meta.fid, meta.name, meta.size);
+            setStatus('busy', `Receiving ${meta.name}...`);
+        }
+        // FLAG 1: CHUNK
+        else if(flag === 1) {
+            const fId = Object.keys(fileRegistry)[0];
             const f = fileRegistry[fId];
             if(f) {
-                try {
-                    const dec = await decrypt(data);
-                    f.buffer.push(dec);
-                    f.received += dec.byteLength;
-                    updateUI(fId, (f.received/f.meta.size)*100, "Receiving...");
-                } catch(e) {}
+                const dec = await decrypt(data);
+                f.buffer.push(dec);
+                f.received += dec.byteLength;
+                updateFileUI(fId, (f.received/f.meta.size)*100);
             }
-        } 
-        // FLAG 2: File End
-        else if (flag === 2) { 
+        }
+        // FLAG 2: END
+        else if(flag === 2) {
             const fId = Object.keys(fileRegistry)[0];
             const f = fileRegistry[fId];
             if(f) {
                 const blob = new Blob(f.buffer, { type: f.meta.type });
                 const url = URL.createObjectURL(blob);
-                const btn = document.getElementById(`btn-${fId}`);
-                btn.classList.remove('hidden');
-                btn.onclick = () => { const a = document.createElement('a'); a.href = url; a.download = f.meta.name; a.click(); };
-                updateUI(fId, 100, "Decrypted ✅");
+                finishFileUI(fId, url, f.meta.name);
                 delete fileRegistry[fId];
+                setStatus('online', 'File Received');
             }
         }
     }
 
-    // --- 4. SENDER LOGIC (TEXT) ---
+    // --- 5. SENDING LOGIC ---
+    // TYPING INDICATOR
+    document.getElementById('text-input').addEventListener('input', () => {
+        if(partnerId) client.publish(`zen/${partnerId}/typing`, '1');
+    });
+
+    function showTyping() {
+        const el = document.getElementById('typing-indicator');
+        el.classList.add('show');
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => el.classList.remove('show'), 2000);
+    }
+
+    // SEND TEXT
     async function sendText() {
         const input = document.getElementById('text-input');
         const text = input.value.trim();
@@ -313,90 +387,63 @@
 
         const enc = await encrypt(new TextEncoder().encode(text));
         const packet = new Uint8Array(enc.byteLength + 1);
-        packet[0] = 3; // Flag 3 for Text
+        packet[0] = 3; 
         packet.set(new Uint8Array(enc), 1);
         
-        client.publish(`turbo/${partnerId}/data`, packet);
+        client.publish(`zen/${partnerId}/data`, packet);
     }
 
-    function addMessage(text, type) {
-        const div = document.createElement('div');
-        div.className = `msg-bubble msg-${type}`;
-        div.innerText = text;
-        
-        // Copy Button
-        const btn = document.createElement('button');
-        btn.className = 'copy-btn';
-        btn.innerHTML = '📋';
-        btn.onclick = () => {
-            navigator.clipboard.writeText(text);
-            btn.innerHTML = '✅';
-            setTimeout(() => btn.innerHTML = '📋', 1000);
-        };
-        div.appendChild(btn);
-        
-        const box = document.getElementById('chat-history');
-        box.appendChild(div);
-        box.scrollTop = box.scrollHeight;
-    }
-
-    // --- 5. SENDER LOGIC (FILES) ---
+    // SEND FILE
     document.getElementById('file-input').addEventListener('change', async (e) => {
-        if(isSending) return alert("Please wait for current file to finish");
+        if(isSending) return;
         const file = e.target.files[0];
         if(!file) return;
 
         isSending = true;
         const fid = Math.random().toString(36).substr(2, 9);
-        createFileUI(fid, file.name, file.size, 'upload');
-        
-        // 1. Send Header
-        const header = JSON.stringify({ name: file.name, size: file.size, type: file.type, fid: fid });
-        const encHeader = await encrypt(new TextEncoder().encode(header));
-        const headerPacket = new Uint8Array(encHeader.length + 1);
-        headerPacket[0] = 0; 
-        headerPacket.set(new Uint8Array(encHeader), 1);
-        client.publish(`turbo/${partnerId}/data`, headerPacket);
+        createFileUI(fid, file.name, file.size);
+        setStatus('busy', `Sending ${file.name}...`);
 
-        // 2. Send Chunks
+        // Header
+        const header = JSON.stringify({ name: file.name, size: file.size, type: file.type, fid });
+        const encHeader = await encrypt(new TextEncoder().encode(header));
+        const p0 = new Uint8Array(encHeader.byteLength + 1);
+        p0[0] = 0; p0.set(new Uint8Array(encHeader), 1);
+        client.publish(`zen/${partnerId}/data`, p0);
+
+        // Chunks
         let offset = 0;
         const processChunk = async () => {
             if(offset >= file.size) {
-                client.publish(`turbo/${partnerId}/data`, new Uint8Array([2])); // End
-                updateUI(fid, 100, "Sent ✅");
+                client.publish(`zen/${partnerId}/data`, new Uint8Array([2])); // End
                 isSending = false;
+                finishFileUI(fid, null, null, true); // Sent
+                setStatus('online', 'Transfer Complete');
                 return;
             }
+            const slice = await file.slice(offset, offset + CHUNK_SIZE).arrayBuffer();
+            const enc = await encrypt(slice);
+            const p1 = new Uint8Array(enc.byteLength + 1);
+            p1[0] = 1; p1.set(new Uint8Array(enc), 1);
 
-            const slice = file.slice(offset, offset + CHUNK_SIZE);
-            const buffer = await slice.arrayBuffer();
-            const encrypted = await encrypt(buffer);
-            
-            const packet = new Uint8Array(encrypted.byteLength + 1);
-            packet[0] = 1; 
-            packet.set(new Uint8Array(encrypted), 1);
-
-            client.publish(`turbo/${partnerId}/data`, packet, { qos: 0 }, (err) => {
-                if(!err) {
-                    offset += buffer.byteLength;
-                    updateUI(fid, (offset/file.size)*100, "Sending...");
-                    processChunk(); 
-                } else {
-                    setTimeout(processChunk, 1000);
-                }
+            client.publish(`zen/${partnerId}/data`, p1, {qos:0}, (e) => {
+                if(!e) {
+                    offset += slice.byteLength;
+                    updateFileUI(fid, (offset/file.size)*100);
+                    processChunk();
+                } else setTimeout(processChunk, 1000);
             });
         };
         processChunk();
     });
 
-    // --- 6. UTILS & UI ---
+    // --- 6. UTILITIES ---
     async function encrypt(data) {
         const iv = window.crypto.getRandomValues(new Uint8Array(12));
-        const encrypted = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, cryptoKey, data);
-        const pack = new Uint8Array(iv.byteLength + encrypted.byteLength);
-        pack.set(iv, 0);
-        pack.set(new Uint8Array(encrypted), 12);
-        return pack;
+        const enc = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, cryptoKey, data);
+        const p = new Uint8Array(iv.byteLength + enc.byteLength);
+        p.set(iv, 0); p.set(new Uint8Array(enc), 12);
+        return p;
     }
 
     async function decrypt(pack) {
@@ -407,47 +454,65 @@
 
     function publish(target, type, data) {
         const payload = (typeof data === 'string') ? data : JSON.stringify(data);
-        client.publish(`turbo/${target}/${type}`, payload);
+        client.publish(`zen/${target}/${type}`, payload);
     }
 
-    function updateStatus(state, msg) {
+    function setStatus(state, text) {
         const dot = document.getElementById('status-dot');
-        dot.style.background = state === 'online' ? '#4ade80' : '#ef4444';
-        document.getElementById('status-text').innerText = msg;
+        dot.className = `status-dot ${state}`;
+        document.getElementById('status-text').innerText = text;
     }
 
+    // --- UI HELPERS ---
     function switchTab(tab) {
-        document.getElementById('view-files').classList.add('hidden');
-        document.getElementById('view-text').classList.add('hidden');
-        document.getElementById(`view-${tab}`).classList.remove('hidden');
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+        document.getElementById(`view-${tab}`).classList.add('active');
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
         document.querySelector(`button[onclick="switchTab('${tab}')"]`).classList.add('active');
-        if(tab === 'text') document.querySelector(`button[onclick="switchTab('text')"]`).innerText = "Text / Clipboard";
     }
 
-    function createFileUI(fid, name, size, type) {
+    function addMessage(text, type) {
+        const div = document.createElement('div');
+        div.className = `msg msg-${type}`;
+        div.innerText = text;
+        const container = document.getElementById('chat-history');
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function createFileUI(fid, name, size) {
         const div = document.createElement('div');
         div.className = 'file-item';
+        div.id = `file-${fid}`;
         div.innerHTML = `
-            <div style="display:flex; justify-content:space-between; font-size:0.9rem; font-weight:500;">
+            <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:white;">
                 <span>${name}</span>
-                <span style="color:#64748b">${(size/1024/1024).toFixed(2)} MB</span>
+                <span style="color:#666">${(size/1024/1024).toFixed(2)} MB</span>
             </div>
-            <div class="progress-track"><div id="prog-${fid}" class="progress-fill"></div></div>
-            <div style="display:flex; justify-content:space-between; margin-top:8px;">
-                <span id="txt-${fid}" class="log-line">Waiting...</span>
-                <button id="btn-${fid}" class="btn hidden" style="width:auto; padding:6px 16px; font-size:0.8rem;">Download</button>
-            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div>
+            <button class="disconnect-btn hidden" style="margin-top:10px; width:100%;">DOWNLOAD</button>
         `;
-        document.getElementById('file-queue').innerHTML = ''; // Clear previous
-        document.getElementById('file-queue').appendChild(div);
+        document.getElementById('file-queue').prepend(div);
     }
 
-    function updateUI(fid, pct, text) {
-        const el = document.getElementById(`prog-${fid}`);
-        if(el) el.style.width = pct + "%";
-        const txt = document.getElementById(`txt-${fid}`);
-        if(txt) txt.innerText = text;
+    function updateFileUI(fid, pct) {
+        const el = document.querySelector(`#file-${fid} .progress-fill`);
+        if(el) el.style.width = `${pct}%`;
+    }
+
+    function finishFileUI(fid, url, name, isSender=false) {
+        const el = document.getElementById(`file-${fid}`);
+        if(!el) return;
+        updateFileUI(fid, 100);
+        
+        if(!isSender) {
+            const btn = el.querySelector('button');
+            btn.classList.remove('hidden');
+            btn.innerText = "SAVE FILE";
+            btn.onclick = () => {
+                const a = document.createElement('a'); a.href = url; a.download = name; a.click();
+            };
+        }
     }
 </script>
 </body>
