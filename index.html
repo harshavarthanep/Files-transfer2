@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InfinityDrop | Ultimate</title>
+    <title>InfinityDrop | Turbo + Text + QR</title>
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
@@ -18,7 +18,7 @@
         h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em; }
         
         /* PANELS */
-        .panel { background: var(--surface); padding: 24px; border-radius: 16px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); flex: 1; overflow: hidden; }
+        .panel { background: var(--surface); padding: 24px; border-radius: 16px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
         .label { font-size: 0.75rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
         
         input[type="text"], input[type="password"], select { 
@@ -30,45 +30,40 @@
         .btn { width: 100%; padding: 14px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; background: var(--primary); color: #0f172a; transition: 0.2s; }
         .btn:hover { opacity: 0.9; }
 
-        /* QR CODE */
-        .qr-container { background: white; padding: 10px; border-radius: 8px; width: fit-content; margin: 0 auto; }
-        
-        /* TABS */
-        .tabs { display: flex; gap: 10px; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 10px; flex-shrink: 0; }
-        .tab-btn { background: transparent; border: none; color: #94a3b8; cursor: pointer; font-weight: 600; padding: 8px 12px; border-radius: 6px; transition: 0.2s; }
-        .tab-btn:hover { background: rgba(255,255,255,0.05); }
+        /* TABS (New) */
+        .tabs { display: flex; gap: 10px; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 10px; }
+        .tab-btn { background: transparent; border: none; color: #94a3b8; cursor: pointer; font-weight: 600; padding: 5px 10px; border-radius: 6px; }
         .tab-btn.active { background: #334155; color: white; }
 
-        /* VIEW AREAS */
-        .view-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        
         /* FILE UI */
-        .drop-zone { border: 2px dashed var(--border); border-radius: 12px; padding: 30px; text-align: center; cursor: pointer; position: relative; transition: 0.2s; background: rgba(255,255,255,0.02); flex-shrink: 0; }
+        .drop-zone { border: 2px dashed var(--border); border-radius: 12px; padding: 30px; text-align: center; cursor: pointer; position: relative; transition: 0.2s; background: rgba(255,255,255,0.02); }
         .drop-zone:hover { border-color: var(--accent); background: rgba(56, 189, 248, 0.05); }
-        .file-item { background: #0f172a; border: 1px solid var(--border); padding: 12px; border-radius: 8px; }
+        .file-item { background: #0f172a; border: 1px solid var(--border); padding: 12px; border-radius: 8px; margin-top: 10px; }
         .progress-track { height: 6px; background: #334155; border-radius: 3px; overflow: hidden; margin-top: 8px; }
         .progress-fill { height: 100%; width: 0%; background: var(--accent); transition: width 0.2s; }
 
-        /* CHAT UI */
-        .chat-history { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 5px; }
-        .msg-bubble { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; word-break: break-word; position: relative; animation: popIn 0.2s ease-out; }
-        .msg-in { align-self: flex-start; background: var(--incoming); color: #e2e8f0; border-bottom-left-radius: 2px; }
+        /* TEXT CHAT UI (New) */
+        .chat-box { flex: 1; overflow-y: auto; background: #0f172a; border: 1px solid var(--border); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 10px; min-height: 200px; }
+        .msg-bubble { max-width: 80%; padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; word-break: break-word; position: relative; }
+        .msg-in { align-self: flex-start; background: var(--incoming); color: #cbd5e1; border-bottom-left-radius: 2px; }
         .msg-out { align-self: flex-end; background: var(--outgoing); color: white; border-bottom-right-radius: 2px; }
+        .copy-btn { position: absolute; top: -8px; right: -8px; background: var(--surface); border: 1px solid var(--border); color: #fff; border-radius: 50%; width: 24px; height: 24px; font-size: 0.7rem; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         
-        .copy-btn { position: absolute; top: -6px; right: -6px; background: var(--surface); border: 1px solid var(--border); color: #fff; border-radius: 50%; width: 22px; height: 22px; font-size: 0.65rem; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
-
-        .input-area { display: flex; gap: 10px; margin-top: auto; padding-top: 10px; border-top: 1px solid var(--border); }
+        .input-area { display: flex; gap: 10px; margin-top: 10px; }
         textarea { flex: 1; background: #0f172a; border: 1px solid var(--border); color: white; padding: 10px; border-radius: 8px; resize: none; height: 50px; outline: none; font-family: 'JetBrains Mono', monospace; }
 
-        @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        /* QR CODE */
+        #qr-container { display: flex; justify-content: center; margin-top: 10px; background: white; padding: 10px; border-radius: 8px; width: fit-content; margin-left: auto; margin-right: auto; }
+
         .hidden { display: none !important; }
+        .log-line { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: #64748b; margin-top: 4px; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
     <header>
-        <h1>InfinityDrop <span style="color:var(--accent)">ULTIMATE</span></h1>
+        <h1>InfinityDrop <span style="color:var(--accent)">TURBO</span></h1>
         <div id="status-badge" style="font-size:0.75rem; color:#94a3b8; display:flex; align-items:center; gap:6px;">
             <div style="width:8px; height:8px; background:#64748b; border-radius:50%" id="status-dot"></div>
             <span id="status-text">Offline</span>
@@ -77,73 +72,71 @@
 
     <div id="panel-setup" class="panel">
         <div>
-            <div class="label">1. Choose Relay</div>
+            <div class="label">1. Choose Relay Network</div>
             <select id="broker-select">
-                <option value="wss://broker.emqx.io:8084/mqtt">EMQX Public (Recommended)</option>
-                <option value="wss://broker.hivemq.com:8000/mqtt">HiveMQ</option>
-                <option value="wss://test.mosquitto.org:8081/mqtt">Mosquitto</option>
+                <option value="wss://broker.emqx.io:8084/mqtt">EMQX Public (Global)</option>
+                <option value="wss://broker.hivemq.com:8000/mqtt">HiveMQ (Fast)</option>
+                <option value="wss://test.mosquitto.org:8081/mqtt">Mosquitto (Stable)</option>
             </select>
         </div>
         <div>
-            <div class="label">2. Shared Password</div>
-            <input type="password" id="secret-pass" placeholder="Enter password (Required)">
+            <div class="label">2. Secure Password</div>
+            <input type="password" id="secret-pass" placeholder="Enter shared password">
         </div>
-        <button class="btn" onclick="initialize()">Start Session</button>
+        <button class="btn" onclick="initialize()">Start Engine</button>
     </div>
 
-    <div id="panel-connect" class="panel hidden" style="align-items:center; text-align:center;">
-        <div class="label">Scan to Connect</div>
-        <div id="qrcode" class="qr-container"></div>
-        <div style="font-size:0.75rem; color:#64748b; margin-top:5px;">Scan with mobile camera</div>
+    <div id="panel-connect" class="panel hidden">
+        <div style="text-align: center;">
+            <div class="label">Scan to Connect</div>
+            <div id="qr-container"></div>
+            <div style="font-size: 0.7rem; color: #64748b; margin-top: 5px;">Or use ID below</div>
+        </div>
 
-        <div style="width:100%; border-top:1px solid var(--border); margin:10px 0;"></div>
-
-        <div style="width:100%; text-align:left;">
+        <div>
             <div class="label">Your ID</div>
-            <input type="text" id="my-id" readonly style="text-align:center; letter-spacing:2px; font-weight:bold;">
+            <input type="text" id="my-id" readonly>
         </div>
-        <div style="width:100%; text-align:left;">
+        <div>
             <div class="label">Partner ID</div>
-            <div style="display:flex; gap:10px;">
-                <input type="text" id="partner-id" placeholder="Enter ID">
-                <button class="btn" style="width:auto;" onclick="connectPeer()">Connect</button>
-            </div>
+            <input type="text" id="partner-id" placeholder="Enter ID or Scan QR">
         </div>
+        <button class="btn" onclick="connectPeer()">Connect</button>
     </div>
 
-    <div id="panel-transfer" class="panel hidden">
+    <div id="panel-transfer" class="panel hidden" style="flex:1;">
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('files')">Files</button>
             <button class="tab-btn" onclick="switchTab('text')">Text / Clipboard</button>
         </div>
 
-        <div id="view-files" class="view-area">
+        <div id="view-files">
             <div class="drop-zone">
                 <input type="file" id="file-input" multiple style="position:absolute; inset:0; opacity:0; cursor:pointer;">
-                <div style="font-size:2rem; margin-bottom:5px;">📂</div>
-                <div style="font-weight:600;">Click to Send Files</div>
+                <div style="font-size:2rem; margin-bottom:10px;">⚡</div>
+                <div style="font-weight:600;">Send Large Files</div>
             </div>
             <div id="file-queue"></div>
         </div>
 
-        <div id="view-text" class="view-area hidden">
-            <div id="chat-history" class="chat-history">
-                <div style="text-align:center; color:#64748b; font-size:0.8rem; margin-top:20px;">
-                    🔒 End-to-End Encrypted Chat
+        <div id="view-text" class="hidden" style="display:flex; flex-direction:column; height:100%;">
+            <div id="chat-history" class="chat-box">
+                <div style="text-align:center; font-size:0.75rem; color:#64748b; margin-top:20px;">
+                    Secure Encrypted Clipboard<br>Messages are not saved on server
                 </div>
             </div>
             <div class="input-area">
-                <textarea id="text-input" placeholder="Type or Paste text..."></textarea>
-                <button class="btn" style="width:auto; padding:0 20px;" onclick="sendText()">➤</button>
+                <textarea id="text-input" placeholder="Type or paste text here..."></textarea>
+                <button class="btn" style="width: auto; padding: 0 20px;" onclick="sendText()">➤</button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // --- CONFIG ---
-    const CHUNK_SIZE = 45 * 1024; 
-
+    // --- CONFIGURATION ---
+    const CHUNK_SIZE = 45 * 1024; // 45KB (Safe for all public brokers)
+    
     // --- STATE ---
     let client, cryptoKey;
     let myId = Math.random().toString(36).substr(2, 6).toUpperCase();
@@ -151,55 +144,61 @@
     let fileRegistry = {};
     let isSending = false;
 
-    // --- 1. SETUP & INIT ---
-    // Check URL for Auto-Connect ID
+    // --- 1. INITIALIZATION ---
+    // Check for ID in URL (QR Code Logic)
     window.onload = () => {
         const urlParams = new URLSearchParams(window.location.search);
-        const remoteId = urlParams.get('id');
-        if(remoteId) {
-            document.getElementById('partner-id').value = remoteId;
+        const pid = urlParams.get('partner');
+        if(pid) {
+            document.getElementById('partner-id').value = pid;
         }
     };
 
     async function initialize() {
         const pass = document.getElementById('secret-pass').value;
         const broker = document.getElementById('broker-select').value;
-        if(pass.length < 4) return alert("Password must be 4+ characters");
+        if(pass.length < 4) return alert("Password too short");
 
-        // Key Derivation
+        // Generate Encryption Key
         const enc = new TextEncoder();
         const keyMat = await window.crypto.subtle.importKey("raw", enc.encode(pass), "PBKDF2", false, ["deriveKey"]);
         cryptoKey = await window.crypto.subtle.deriveKey(
-            { name: "PBKDF2", salt: enc.encode("UltimateSalt"), iterations: 50000, hash: "SHA-256" },
+            { name: "PBKDF2", salt: enc.encode("TurboSalt"), iterations: 50000, hash: "SHA-256" },
             keyMat, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]
         );
 
         document.getElementById('panel-setup').classList.add('hidden');
-        document.getElementById('status-text').innerText = "Connecting...";
+        document.getElementById('status-text').innerText = "Connecting to Relay...";
         
-        client = mqtt.connect(broker, { keepalive: 60, clientId: 'ult_' + myId, clean: true });
+        // Connect to MQTT
+        client = mqtt.connect(broker, { 
+            keepalive: 60, 
+            clientId: 'turbo_' + myId,
+            clean: true 
+        });
 
         client.on('connect', () => {
-            updateStatus('online', 'Online');
+            updateStatus('online', 'Relay Connected');
             document.getElementById('my-id').value = myId;
             document.getElementById('panel-connect').classList.remove('hidden');
-            document.getElementById('panel-connect').style.display = 'flex'; // Fix flex layout
             
-            client.subscribe(`ultra/${myId}/#`);
+            // Generate QR Code
             generateQR();
+
+            // Subscribe to my inbox
+            client.subscribe(`turbo/${myId}/#`);
         });
 
         client.on('message', handleMessage);
+        client.on('error', (e) => updateStatus('error', 'Connection Error'));
     }
 
+    // --- 2. SIGNALING & QR ---
     function generateQR() {
-        // Generates a URL that auto-fills the ID on the other device
-        // Works best if you host this file (e.g. GitHub Pages)
-        const baseUrl = window.location.href.split('?')[0];
-        const connectUrl = `${baseUrl}?id=${myId}`;
-        
-        new QRCode(document.getElementById("qrcode"), {
-            text: connectUrl,
+        // Creates a URL: current_page.html?partner=MY_ID
+        const link = window.location.href.split('?')[0] + '?partner=' + myId;
+        new QRCode(document.getElementById("qr-container"), {
+            text: link,
             width: 128,
             height: 128,
             colorDark : "#000000",
@@ -211,12 +210,14 @@
     function connectPeer() {
         partnerId = document.getElementById('partner-id').value.trim().toUpperCase();
         if(!partnerId) return;
+        
+        // Send handshake
         publish(partnerId, 'signal', { type: 'hello', from: myId });
         document.getElementById('status-text').innerText = "Dialing...";
     }
 
-    // --- 2. MESSAGE ROUTER ---
     async function handleMessage(topic, payload) {
+        // Topic: turbo/{myId}/{type}
         const type = topic.split('/').pop();
 
         if(type === 'signal') {
@@ -232,57 +233,76 @@
             }
         } 
         else if (type === 'data') {
-            processEncryptedData(payload);
+            handleDataChunk(payload); // Payload is Binary Buffer
         }
     }
 
-    async function processEncryptedData(buffer) {
+    function startSession() {
+        document.getElementById('panel-connect').classList.add('hidden');
+        document.getElementById('panel-transfer').classList.remove('hidden');
+        updateStatus('online', `Linked with ${partnerId}`);
+    }
+
+    // --- 3. DATA HANDLER (TEXT + FILES) ---
+    async function handleDataChunk(buffer) {
         const flag = buffer[0];
         const data = buffer.slice(1);
 
-        try {
-            // Flag 3: TEXT MESSAGE
-            if(flag === 3) {
+        // FLAG 3: TEXT MESSAGE
+        if(flag === 3) {
+            try {
                 const dec = await decrypt(data);
                 const text = new TextDecoder().decode(dec);
                 addMessage(text, 'in');
-                // Notify user if on files tab
-                const btn = document.querySelector('button[onclick="switchTab(\'text\')"]');
-                if(!btn.classList.contains('active')) btn.innerText = "Text (New!)";
-            }
-            // Flag 0: FILE HEADER
-            else if(flag === 0) {
+                
+                // Notify user on tab
+                const textTab = document.getElementById('view-text');
+                if(textTab.classList.contains('hidden')) {
+                     document.querySelector('button[onclick="switchTab(\'text\')"]').innerText = "Text (New!)";
+                }
+            } catch(e) { console.error("Text Decrypt Fail"); }
+            return;
+        }
+
+        // FLAG 0: File Header
+        if(flag === 0) { 
+            try {
                 const dec = await decrypt(data);
                 const meta = JSON.parse(new TextDecoder().decode(dec));
                 fileRegistry[meta.fid] = { meta, buffer: [], received: 0 };
-                createFileUI(meta.fid, meta.name, meta.size);
-            } 
-            // Flag 1: FILE CHUNK
-            else if (flag === 1) { 
-                const fId = Object.keys(fileRegistry)[0];
-                const f = fileRegistry[fId];
-                if(f) {
+                createFileUI(meta.fid, meta.name, meta.size, 'download');
+            } catch(e) { console.error("Decrypt Header Fail"); }
+        } 
+        // FLAG 1: File Chunk
+        else if (flag === 1) { 
+            const fId = Object.keys(fileRegistry)[0]; 
+            const f = fileRegistry[fId];
+            if(f) {
+                try {
                     const dec = await decrypt(data);
                     f.buffer.push(dec);
                     f.received += dec.byteLength;
-                    updateFileUI(fId, (f.received/f.meta.size)*100);
-                }
-            } 
-            // Flag 2: FILE END
-            else if (flag === 2) { 
-                const fId = Object.keys(fileRegistry)[0];
-                const f = fileRegistry[fId];
-                if(f) {
-                    const blob = new Blob(f.buffer, { type: f.meta.type });
-                    const url = URL.createObjectURL(blob);
-                    enableDownload(fId, url, f.meta.name);
-                    delete fileRegistry[fId];
-                }
+                    updateUI(fId, (f.received/f.meta.size)*100, "Receiving...");
+                } catch(e) {}
             }
-        } catch(e) { console.error("Decryption fail", e); }
+        } 
+        // FLAG 2: File End
+        else if (flag === 2) { 
+            const fId = Object.keys(fileRegistry)[0];
+            const f = fileRegistry[fId];
+            if(f) {
+                const blob = new Blob(f.buffer, { type: f.meta.type });
+                const url = URL.createObjectURL(blob);
+                const btn = document.getElementById(`btn-${fId}`);
+                btn.classList.remove('hidden');
+                btn.onclick = () => { const a = document.createElement('a'); a.href = url; a.download = f.meta.name; a.click(); };
+                updateUI(fId, 100, "Decrypted ✅");
+                delete fileRegistry[fId];
+            }
+        }
     }
 
-    // --- 3. SENDING LOGIC ---
+    // --- 4. SENDER LOGIC (TEXT) ---
     async function sendText() {
         const input = document.getElementById('text-input');
         const text = input.value.trim();
@@ -296,83 +316,7 @@
         packet[0] = 3; // Flag 3 for Text
         packet.set(new Uint8Array(enc), 1);
         
-        client.publish(`ultra/${partnerId}/data`, packet);
-    }
-
-    document.getElementById('file-input').addEventListener('change', async (e) => {
-        if(isSending) return alert("Sending in progress...");
-        const file = e.target.files[0];
-        if(!file) return;
-
-        isSending = true;
-        const fid = Math.random().toString(36).substr(2, 9);
-        createFileUI(fid, file.name, file.size);
-        
-        // Header
-        const header = JSON.stringify({ name: file.name, size: file.size, type: file.type, fid });
-        const encHeader = await encrypt(new TextEncoder().encode(header));
-        const p1 = new Uint8Array(encHeader.byteLength + 1);
-        p1[0] = 0; p1.set(new Uint8Array(encHeader), 1);
-        client.publish(`ultra/${partnerId}/data`, p1);
-
-        // Chunks
-        let offset = 0;
-        const processChunk = async () => {
-            if(offset >= file.size) {
-                client.publish(`ultra/${partnerId}/data`, new Uint8Array([2])); // End
-                isSending = false;
-                return;
-            }
-            const slice = await file.slice(offset, offset + CHUNK_SIZE).arrayBuffer();
-            const enc = await encrypt(slice);
-            const packet = new Uint8Array(enc.byteLength + 1);
-            packet[0] = 1; packet.set(new Uint8Array(enc), 1);
-
-            client.publish(`ultra/${partnerId}/data`, packet, {qos:0}, (e) => {
-                if(!e) {
-                    offset += slice.byteLength;
-                    updateFileUI(fid, (offset/file.size)*100);
-                    processChunk();
-                } else setTimeout(processChunk, 1000);
-            });
-        };
-        processChunk();
-    });
-
-    // --- 4. HELPERS ---
-    async function encrypt(data) {
-        const iv = window.crypto.getRandomValues(new Uint8Array(12));
-        const enc = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, cryptoKey, data);
-        const p = new Uint8Array(iv.byteLength + enc.byteLength);
-        p.set(iv, 0); p.set(new Uint8Array(enc), 12);
-        return p;
-    }
-
-    async function decrypt(pack) {
-        const iv = pack.slice(0, 12);
-        const data = pack.slice(12);
-        return await window.crypto.subtle.decrypt({ name: "AES-GCM", iv }, cryptoKey, data);
-    }
-
-    function publish(t, type, d) {
-        const payload = (typeof d === 'string') ? d : JSON.stringify(d);
-        client.publish(`ultra/${t}/${type}`, payload);
-    }
-
-    function startSession() {
-        document.getElementById('panel-connect').classList.add('hidden');
-        document.getElementById('panel-transfer').classList.remove('hidden');
-        document.getElementById('panel-transfer').style.display = 'flex'; // Fix layout
-        updateStatus('online', `Connected: ${partnerId}`);
-    }
-
-    function switchTab(tab) {
-        document.getElementById('view-files').classList.add('hidden');
-        document.getElementById('view-text').classList.add('hidden');
-        document.getElementById(`view-${tab}`).classList.remove('hidden');
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelector(`button[onclick="switchTab('${tab}')"]`).classList.add('active');
-        if(tab === 'text') document.querySelector(`button[onclick="switchTab('text')"]`).innerText = "Text / Clipboard";
+        client.publish(`turbo/${partnerId}/data`, packet);
     }
 
     function addMessage(text, type) {
@@ -380,6 +324,7 @@
         div.className = `msg-bubble msg-${type}`;
         div.innerText = text;
         
+        // Copy Button
         const btn = document.createElement('button');
         btn.className = 'copy-btn';
         btn.innerHTML = '📋';
@@ -395,34 +340,114 @@
         box.scrollTop = box.scrollHeight;
     }
 
-    function createFileUI(fid, name, size) {
-        const div = document.createElement('div');
-        div.className = 'file-item';
-        div.innerHTML = `
-            <div style="display:flex; justify-content:space-between; font-size:0.9rem;">
-                <span>${name}</span><span style="color:#64748b">${(size/1024/1024).toFixed(2)} MB</span>
-            </div>
-            <div class="progress-track"><div id="prog-${fid}" class="progress-fill"></div></div>
-            <button id="btn-${fid}" class="btn hidden" style="margin-top:10px; padding:6px; font-size:0.8rem;">Download</button>
-        `;
-        document.getElementById('file-queue').prepend(div);
+    // --- 5. SENDER LOGIC (FILES) ---
+    document.getElementById('file-input').addEventListener('change', async (e) => {
+        if(isSending) return alert("Please wait for current file to finish");
+        const file = e.target.files[0];
+        if(!file) return;
+
+        isSending = true;
+        const fid = Math.random().toString(36).substr(2, 9);
+        createFileUI(fid, file.name, file.size, 'upload');
+        
+        // 1. Send Header
+        const header = JSON.stringify({ name: file.name, size: file.size, type: file.type, fid: fid });
+        const encHeader = await encrypt(new TextEncoder().encode(header));
+        const headerPacket = new Uint8Array(encHeader.length + 1);
+        headerPacket[0] = 0; 
+        headerPacket.set(new Uint8Array(encHeader), 1);
+        client.publish(`turbo/${partnerId}/data`, headerPacket);
+
+        // 2. Send Chunks
+        let offset = 0;
+        const processChunk = async () => {
+            if(offset >= file.size) {
+                client.publish(`turbo/${partnerId}/data`, new Uint8Array([2])); // End
+                updateUI(fid, 100, "Sent ✅");
+                isSending = false;
+                return;
+            }
+
+            const slice = file.slice(offset, offset + CHUNK_SIZE);
+            const buffer = await slice.arrayBuffer();
+            const encrypted = await encrypt(buffer);
+            
+            const packet = new Uint8Array(encrypted.byteLength + 1);
+            packet[0] = 1; 
+            packet.set(new Uint8Array(encrypted), 1);
+
+            client.publish(`turbo/${partnerId}/data`, packet, { qos: 0 }, (err) => {
+                if(!err) {
+                    offset += buffer.byteLength;
+                    updateUI(fid, (offset/file.size)*100, "Sending...");
+                    processChunk(); 
+                } else {
+                    setTimeout(processChunk, 1000);
+                }
+            });
+        };
+        processChunk();
+    });
+
+    // --- 6. UTILS & UI ---
+    async function encrypt(data) {
+        const iv = window.crypto.getRandomValues(new Uint8Array(12));
+        const encrypted = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, cryptoKey, data);
+        const pack = new Uint8Array(iv.byteLength + encrypted.byteLength);
+        pack.set(iv, 0);
+        pack.set(new Uint8Array(encrypted), 12);
+        return pack;
     }
 
-    function updateFileUI(fid, pct) {
-        const el = document.getElementById(`prog-${fid}`);
-        if(el) el.style.width = pct + "%";
+    async function decrypt(pack) {
+        const iv = pack.slice(0, 12);
+        const data = pack.slice(12);
+        return await window.crypto.subtle.decrypt({ name: "AES-GCM", iv }, cryptoKey, data);
     }
 
-    function enableDownload(fid, url, name) {
-        const btn = document.getElementById(`btn-${fid}`);
-        btn.classList.remove('hidden');
-        btn.onclick = () => { const a = document.createElement('a'); a.href = url; a.download = name; a.click(); };
-        updateFileUI(fid, 100);
+    function publish(target, type, data) {
+        const payload = (typeof data === 'string') ? data : JSON.stringify(data);
+        client.publish(`turbo/${target}/${type}`, payload);
     }
 
     function updateStatus(state, msg) {
-        document.getElementById('status-dot').style.background = state === 'online' ? '#4ade80' : '#ef4444';
+        const dot = document.getElementById('status-dot');
+        dot.style.background = state === 'online' ? '#4ade80' : '#ef4444';
         document.getElementById('status-text').innerText = msg;
+    }
+
+    function switchTab(tab) {
+        document.getElementById('view-files').classList.add('hidden');
+        document.getElementById('view-text').classList.add('hidden');
+        document.getElementById(`view-${tab}`).classList.remove('hidden');
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector(`button[onclick="switchTab('${tab}')"]`).classList.add('active');
+        if(tab === 'text') document.querySelector(`button[onclick="switchTab('text')"]`).innerText = "Text / Clipboard";
+    }
+
+    function createFileUI(fid, name, size, type) {
+        const div = document.createElement('div');
+        div.className = 'file-item';
+        div.innerHTML = `
+            <div style="display:flex; justify-content:space-between; font-size:0.9rem; font-weight:500;">
+                <span>${name}</span>
+                <span style="color:#64748b">${(size/1024/1024).toFixed(2)} MB</span>
+            </div>
+            <div class="progress-track"><div id="prog-${fid}" class="progress-fill"></div></div>
+            <div style="display:flex; justify-content:space-between; margin-top:8px;">
+                <span id="txt-${fid}" class="log-line">Waiting...</span>
+                <button id="btn-${fid}" class="btn hidden" style="width:auto; padding:6px 16px; font-size:0.8rem;">Download</button>
+            </div>
+        `;
+        document.getElementById('file-queue').innerHTML = ''; // Clear previous
+        document.getElementById('file-queue').appendChild(div);
+    }
+
+    function updateUI(fid, pct, text) {
+        const el = document.getElementById(`prog-${fid}`);
+        if(el) el.style.width = pct + "%";
+        const txt = document.getElementById(`txt-${fid}`);
+        if(txt) txt.innerText = text;
     }
 </script>
 </body>
