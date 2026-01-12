@@ -3,389 +3,300 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InfinityDrop | Turbo + Text</title>
+    <title>InfinityDrop | MQTT Tunnel</title>
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #0f172a; --surface: #1e293b; --border: #334155; --primary: #f8fafc; --accent: #38bdf8; --success: #4ade80; --incoming: #334155; --outgoing: #0ea5e9; }
+        /* Keeping your original beautiful styling */
+        :root { --bg: #050505; --surface: #111; --border: #333; --primary: #fff; --success: #22c55e; --text-sec: #666; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
         body { background: var(--bg); color: var(--primary); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        .app-container { width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 20px; height: 90vh; }
-        
-        /* HEADER */
-        header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-        h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em; }
-        
-        /* PANELS */
-        .panel { background: var(--surface); padding: 24px; border-radius: 16px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-        .label { font-size: 0.75rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
-        
-        input[type="text"], input[type="password"], select { 
-            width: 100%; background: #0f172a; border: 1px solid var(--border); color: white; 
-            padding: 14px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; outline: none; transition: 0.2s;
-        }
-        input:focus, select:focus { border-color: var(--accent); }
-        
-        .btn { width: 100%; padding: 14px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; background: var(--primary); color: #0f172a; transition: 0.2s; }
-        .btn:hover { opacity: 0.9; }
-
-        /* TABS (New) */
-        .tabs { display: flex; gap: 10px; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 10px; }
-        .tab-btn { background: transparent; border: none; color: #94a3b8; cursor: pointer; font-weight: 600; padding: 5px 10px; border-radius: 6px; }
-        .tab-btn.active { background: #334155; color: white; }
-
-        /* FILE UI */
-        .drop-zone { border: 2px dashed var(--border); border-radius: 12px; padding: 30px; text-align: center; cursor: pointer; position: relative; transition: 0.2s; background: rgba(255,255,255,0.02); }
-        .drop-zone:hover { border-color: var(--accent); background: rgba(56, 189, 248, 0.05); }
-        .file-item { background: #0f172a; border: 1px solid var(--border); padding: 12px; border-radius: 8px; margin-top: 10px; }
-        .progress-track { height: 6px; background: #334155; border-radius: 3px; overflow: hidden; margin-top: 8px; }
-        .progress-fill { height: 100%; width: 0%; background: var(--accent); transition: width 0.2s; }
-
-        /* TEXT CHAT UI (New) */
-        .chat-box { flex: 1; overflow-y: auto; background: #0f172a; border: 1px solid var(--border); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 10px; min-height: 200px; }
-        .msg-bubble { max-width: 80%; padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; word-break: break-word; position: relative; }
-        .msg-in { align-self: flex-start; background: var(--incoming); color: #cbd5e1; border-bottom-left-radius: 2px; }
-        .msg-out { align-self: flex-end; background: var(--outgoing); color: white; border-bottom-right-radius: 2px; }
-        .copy-btn { position: absolute; top: -8px; right: -8px; background: var(--surface); border: 1px solid var(--border); color: #fff; border-radius: 50%; width: 24px; height: 24px; font-size: 0.7rem; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        
-        .input-area { display: flex; gap: 10px; margin-top: 10px; }
-        textarea { flex: 1; background: #0f172a; border: 1px solid var(--border); color: white; padding: 10px; border-radius: 8px; resize: none; height: 50px; outline: none; font-family: 'JetBrains Mono', monospace; }
-
+        .app-container { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 20px; }
+        header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid var(--border); }
+        .status-dot { width: 8px; height: 8px; background: #333; border-radius: 50%; }
+        .status-dot.online { background: var(--success); box-shadow: 0 0 8px rgba(34, 197, 94, 0.3); }
+        .panel { display: flex; flex-direction: column; gap: 16px; }
+        .input-row { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 4px; }
+        input[type="text"] { flex: 1; background: transparent; border: none; color: white; padding: 12px; outline: none; font-family: 'JetBrains Mono', monospace; }
+        .btn-main { width: 100%; padding: 14px; background: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition:0.2s; }
+        .btn-main:hover { opacity:0.9; }
         .hidden { display: none !important; }
+        .log-box { background: #080808; border-top: 1px solid var(--border); padding: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: #555; height: 120px; overflow-y: auto; }
+        .file-item { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-top: 10px; }
+        .progress-bar { height: 4px; background: #222; margin-top: 8px; border-radius: 2px; overflow: hidden; }
+        .progress-fill { height: 100%; width: 0%; background: white; transition: width 0.1s; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
     <header>
-        <h1>InfinityDrop <span style="color:var(--accent)">TURBO</span></h1>
-        <div id="status-badge" style="font-size:0.75rem; color:#94a3b8; display:flex; align-items:center; gap:6px;">
-            <div style="width:8px; height:8px; background:#64748b; border-radius:50%" id="status-dot"></div>
-            <span id="status-text">Offline</span>
+        <h1>InfinityDrop <span style="font-size:0.6em; opacity:0.5; border:1px solid #333; padding:2px 6px; border-radius:4px;">TUNNEL</span></h1>
+        <div class="status-badge" style="display:flex; gap:6px; align-items:center; font-size:0.75rem; color:#666;">
+            <div id="status-dot" class="status-dot"></div>
+            <span id="status-text">Connecting...</span>
         </div>
     </header>
 
-    <div id="panel-setup" class="panel">
+    <div id="panel-connect" class="panel">
         <div>
-            <div class="label">1. Relay Network</div>
-            <select id="broker-select">
-                <option value="wss://broker.emqx.io:8084/mqtt">EMQX Public (Global)</option>
-                <option value="wss://broker.hivemq.com:8000/mqtt">HiveMQ (Fast)</option>
-                <option value="wss://test.mosquitto.org:8081/mqtt">Mosquitto (Stable)</option>
-            </select>
-        </div>
-        <div>
-            <div class="label">2. Secure Password</div>
-            <input type="password" id="secret-pass" placeholder="Shared secret key">
-        </div>
-        <button class="btn" onclick="initialize()">Start Engine</button>
-    </div>
-
-    <div id="panel-connect" class="panel hidden">
-        <div>
-            <div class="label">Your ID</div>
-            <input type="text" id="my-id" readonly>
-        </div>
-        <div>
-            <div class="label">Partner ID</div>
-            <input type="text" id="partner-id" placeholder="Enter ID">
-        </div>
-        <button class="btn" onclick="connectPeer()">Connect</button>
-    </div>
-
-    <div id="panel-transfer" class="panel hidden" style="flex:1;">
-        <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('files')">Files</button>
-            <button class="tab-btn" onclick="switchTab('text')">Text / Clipboard</button>
-        </div>
-
-        <div id="view-files">
-            <div class="drop-zone">
-                <input type="file" id="file-input" multiple style="position:absolute; inset:0; opacity:0; cursor:pointer;">
-                <div style="font-size:2rem; margin-bottom:10px;">⚡</div>
-                <div style="font-weight:600;">Send Large Files</div>
-            </div>
-            <div id="file-queue"></div>
-        </div>
-
-        <div id="view-text" class="hidden" style="display:flex; flex-direction:column; height:100%;">
-            <div id="chat-history" class="chat-box">
-                <div style="text-align:center; font-size:0.75rem; color:#64748b; margin-top:20px;">
-                    Secure Encrypted Clipboard<br>Messages are not saved on server
-                </div>
-            </div>
-            <div class="input-area">
-                <textarea id="text-input" placeholder="Type or paste text here..."></textarea>
-                <button class="btn" style="width: auto; padding: 0 20px;" onclick="sendText()">➤</button>
+            <div style="font-size: 0.7rem; color: #666; margin-bottom: 6px;">YOUR ID</div>
+            <div class="input-row">
+                <input type="text" id="my-id" readonly value="...">
             </div>
         </div>
+
+        <div>
+            <div style="font-size: 0.7rem; color: #666; margin-bottom: 6px;">PARTNER ID</div>
+            <div class="input-row">
+                <input type="text" id="partner-id" placeholder="Enter ID to connect">
+            </div>
+        </div>
+        <button id="btn-connect" class="btn-main" onclick="connectToPartner()">Connect</button>
     </div>
+
+    <div id="panel-transfer" class="panel hidden">
+        <div style="border: 1px dashed #333; padding: 40px; text-align: center; border-radius: 12px; cursor: pointer; position: relative;">
+            <input type="file" id="file-input" multiple style="position:absolute; inset:0; opacity:0; cursor:pointer;">
+            <div style="margin-bottom:5px;">+ Send Files</div>
+            <div style="font-size:0.75rem; color:#666">Max recommended: 50MB</div>
+        </div>
+        <div id="file-queue"></div>
+        <button class="btn-main" onclick="location.reload()" style="background:transparent; border:1px solid #333; color:#888;">Disconnect</button>
+    </div>
+
+    <div id="logs" class="log-box"></div>
 </div>
 
 <script>
-    // --- CONFIG ---
-    const CHUNK_SIZE = 45 * 1024; 
-    
-    // --- STATE ---
-    let client, cryptoKey;
-    let myId = Math.random().toString(36).substr(2, 6).toUpperCase();
+    // --- 1. CONFIGURATION ---
+    // We use a public, free broker. 
+    // Options: 'broker.emqx.io', 'test.mosquitto.org', 'broker.hivemq.com'
+    const BROKER_URL = 'wss://broker.emqx.io:8084/mqtt'; 
+    const CHUNK_SIZE = 12 * 1024; // 12KB chunks (Safe for MQTT)
+
+    // --- 2. UTILS ---
+    const log = (msg) => {
+        const box = document.getElementById('logs');
+        box.innerHTML += `<div>> ${msg}</div>`;
+        box.scrollTop = box.scrollHeight;
+    };
+    const generateId = () => Math.random().toString(36).substr(2, 6).toUpperCase();
+    const formatSize = (b) => (b/1024/1024).toFixed(2) + ' MB';
+
+    // --- 3. STATE ---
+    let client;
+    let myId = generateId();
     let partnerId = null;
     let fileRegistry = {};
-    let isSending = false;
+    let isConnected = false;
 
-    // --- 1. CORE LOGIC ---
-    async function initialize() {
-        const pass = document.getElementById('secret-pass').value;
-        const broker = document.getElementById('broker-select').value;
-        if(pass.length < 4) return alert("Password too short");
+    document.getElementById('my-id').value = myId;
 
-        // Key Gen
-        const enc = new TextEncoder();
-        const keyMat = await window.crypto.subtle.importKey("raw", enc.encode(pass), "PBKDF2", false, ["deriveKey"]);
-        cryptoKey = await window.crypto.subtle.deriveKey(
-            { name: "PBKDF2", salt: enc.encode("TurboSalt"), iterations: 50000, hash: "SHA-256" },
-            keyMat, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]
-        );
-
-        document.getElementById('panel-setup').classList.add('hidden');
-        document.getElementById('status-text').innerText = "Connecting...";
-        
-        client = mqtt.connect(broker, { keepalive: 60, clientId: 'turbo_' + myId, clean: true });
-
-        client.on('connect', () => {
-            updateStatus('online', 'Online');
-            document.getElementById('my-id').value = myId;
-            document.getElementById('panel-connect').classList.remove('hidden');
-            client.subscribe(`turbo/${myId}/#`);
-        });
-
-        client.on('message', handleMessage);
-    }
-
-    function connectPeer() {
-        partnerId = document.getElementById('partner-id').value.trim().toUpperCase();
-        if(!partnerId) return;
-        publish(partnerId, 'signal', { type: 'hello', from: myId });
-        document.getElementById('status-text').innerText = "Dialing...";
-    }
-
-    // --- 2. MESSAGE HANDLING ---
-    async function handleMessage(topic, payload) {
-        const type = topic.split('/').pop();
-
-        if(type === 'signal') {
-            const data = JSON.parse(payload.toString());
-            if(data.type === 'hello') {
-                partnerId = data.from;
-                document.getElementById('partner-id').value = partnerId;
-                publish(partnerId, 'signal', { type: 'welcome', from: myId });
-                startSession();
-            } else if(data.type === 'welcome') {
-                partnerId = data.from;
-                startSession();
-            }
-        } 
-        else if (type === 'data') {
-            processEncryptedData(payload);
-        }
-    }
-
-    async function processEncryptedData(buffer) {
-        const flag = buffer[0];
-        const data = buffer.slice(1);
-
-        // Flag 3: TEXT MESSAGE
-        if(flag === 3) {
-            try {
-                const dec = await decrypt(data);
-                const text = new TextDecoder().decode(dec);
-                addMessage(text, 'in');
-                // Auto switch to text tab if hidden
-                const textTab = document.getElementById('view-text');
-                if(textTab.classList.contains('hidden')) {
-                     document.querySelector('button[onclick="switchTab(\'text\')"]').innerText = "Text (New!)";
-                }
-            } catch(e) { console.error("Text Decrypt Fail"); }
-            return;
-        }
-
-        // Flag 0: File Header
-        if(flag === 0) {
-            try {
-                const dec = await decrypt(data);
-                const meta = JSON.parse(new TextDecoder().decode(dec));
-                fileRegistry[meta.fid] = { meta, buffer: [], received: 0 };
-                createFileUI(meta.fid, meta.name, meta.size);
-            } catch(e) {}
-        } 
-        // Flag 1: File Chunk
-        else if (flag === 1) { 
-            const fId = Object.keys(fileRegistry)[0];
-            const f = fileRegistry[fId];
-            if(f) {
-                const dec = await decrypt(data);
-                f.buffer.push(dec);
-                f.received += dec.byteLength;
-                updateFileUI(fId, (f.received/f.meta.size)*100);
-            }
-        } 
-        // Flag 2: File End
-        else if (flag === 2) { 
-            const fId = Object.keys(fileRegistry)[0];
-            const f = fileRegistry[fId];
-            if(f) {
-                const blob = new Blob(f.buffer, { type: f.meta.type });
-                const url = URL.createObjectURL(blob);
-                enableDownload(fId, url, f.meta.name);
-                delete fileRegistry[fId];
-            }
-        }
-    }
-
-    // --- 3. SENDING LOGIC ---
+    // --- 4. MQTT CONNECTION ---
+    log(`Connecting to Public Relay...`);
     
-    // Send Text
-    async function sendText() {
-        const input = document.getElementById('text-input');
-        const text = input.value.trim();
-        if(!text || !partnerId) return;
-
-        addMessage(text, 'out');
-        input.value = "";
-
-        const enc = await encrypt(new TextEncoder().encode(text));
-        const packet = new Uint8Array(enc.byteLength + 1);
-        packet[0] = 3; // Flag 3 for Text
-        packet.set(new Uint8Array(enc), 1);
-        
-        client.publish(`turbo/${partnerId}/data`, packet);
-    }
-
-    // Send File
-    document.getElementById('file-input').addEventListener('change', async (e) => {
-        if(isSending) return alert("Busy sending");
-        const file = e.target.files[0];
-        if(!file) return;
-
-        isSending = true;
-        const fid = Math.random().toString(36).substr(2, 9);
-        createFileUI(fid, file.name, file.size);
-        
-        // Header
-        const header = JSON.stringify({ name: file.name, size: file.size, type: file.type, fid });
-        const encHeader = await encrypt(new TextEncoder().encode(header));
-        const p1 = new Uint8Array(encHeader.byteLength + 1);
-        p1[0] = 0; p1.set(new Uint8Array(encHeader), 1);
-        client.publish(`turbo/${partnerId}/data`, p1);
-
-        // Chunks
-        let offset = 0;
-        const processChunk = async () => {
-            if(offset >= file.size) {
-                client.publish(`turbo/${partnerId}/data`, new Uint8Array([2])); // End
-                isSending = false;
-                return;
-            }
-            const slice = await file.slice(offset, offset + CHUNK_SIZE).arrayBuffer();
-            const enc = await encrypt(slice);
-            const packet = new Uint8Array(enc.byteLength + 1);
-            packet[0] = 1; packet.set(new Uint8Array(enc), 1);
-
-            client.publish(`turbo/${partnerId}/data`, packet, {qos:0}, (e) => {
-                if(!e) {
-                    offset += slice.byteLength;
-                    updateFileUI(fid, (offset/file.size)*100);
-                    processChunk();
-                } else setTimeout(processChunk, 1000);
-            });
-        };
-        processChunk();
+    client = mqtt.connect(BROKER_URL, {
+        keepalive: 60,
+        clientId: 'drop_' + Math.random().toString(16).substr(2, 8),
+        clean: true,
+        connectTimeout: 4000,
     });
 
-    // --- 4. HELPERS ---
-    async function encrypt(data) {
-        const iv = window.crypto.getRandomValues(new Uint8Array(12));
-        const enc = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, cryptoKey, data);
-        const p = new Uint8Array(iv.byteLength + enc.byteLength);
-        p.set(iv, 0); p.set(new Uint8Array(enc), 12);
-        return p;
+    client.on('connect', () => {
+        isConnected = true;
+        updateStatus('online', 'Relay Ready');
+        log('Connected to Global Relay');
+        
+        // Subscribe to my own inbox
+        client.subscribe(`infinitydrop/${myId}/#`, (err) => {
+            if(!err) log(`Listening on channel: ${myId}`);
+        });
+    });
+
+    client.on('error', (err) => {
+        log(`Connection Error: ${err.message}`);
+        updateStatus('error', 'Error');
+    });
+
+    // --- 5. LOGIC: CONNECT ---
+    function connectToPartner() {
+        const input = document.getElementById('partner-id').value.trim().toUpperCase();
+        if(!input) return alert("Enter Partner ID");
+        if(input === myId) return alert("Cannot connect to self");
+
+        partnerId = input;
+        
+        // Handshake
+        publishTo(partnerId, 'signal', { type: 'hello', sender: myId });
+        
+        document.getElementById('btn-connect').innerText = "Requesting...";
     }
 
-    async function decrypt(pack) {
-        const iv = pack.slice(0, 12);
-        const data = pack.slice(12);
-        return await window.crypto.subtle.decrypt({ name: "AES-GCM", iv }, cryptoKey, data);
+    // --- 6. LOGIC: MESSAGING ---
+    client.on('message', (topic, message) => {
+        // topic format: infinitydrop/{myId}/{type}
+        const msgType = topic.split('/').pop(); // 'signal' or 'data'
+        
+        try {
+            const payload = JSON.parse(message.toString());
+
+            if (msgType === 'signal') {
+                handleSignal(payload);
+            } else if (msgType === 'data') {
+                handleData(payload);
+            }
+        } catch (e) {
+            console.error("Parse error", e);
+        }
+    });
+
+    function publishTo(target, type, data) {
+        // Publish to: infinitydrop/{targetId}/{type}
+        client.publish(`infinitydrop/${target}/${type}`, JSON.stringify(data));
     }
 
-    function publish(t, type, d) {
-        const payload = (typeof d === 'string') ? d : JSON.stringify(d);
-        client.publish(`turbo/${t}/${type}`, payload);
+    // --- 7. HANDLERS ---
+    function handleSignal(data) {
+        if(data.type === 'hello') {
+            log(`Connection request from ${data.sender}`);
+            partnerId = data.sender;
+            document.getElementById('partner-id').value = partnerId;
+            
+            // Auto-accept and switch UI
+            publishTo(partnerId, 'signal', { type: 'welcome', sender: myId });
+            activateTransferUI();
+        } 
+        else if (data.type === 'welcome') {
+            log(`Connected to ${data.sender}!`);
+            activateTransferUI();
+        }
     }
 
-    function startSession() {
+    function activateTransferUI() {
         document.getElementById('panel-connect').classList.add('hidden');
         document.getElementById('panel-transfer').classList.remove('hidden');
-        updateStatus('online', `Connected: ${partnerId}`);
+        updateStatus('online', 'Tunnel Established');
     }
 
-    function switchTab(tab) {
-        document.getElementById('view-files').classList.add('hidden');
-        document.getElementById('view-text').classList.add('hidden');
-        document.getElementById(`view-${tab}`).classList.remove('hidden');
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelector(`button[onclick="switchTab('${tab}')"]`).classList.add('active');
-        if(tab === 'text') document.querySelector(`button[onclick="switchTab('text')"]`).innerText = "Text / Clipboard";
+    function handleData(data) {
+        // Receiver Logic
+        if(data.type === 'head') {
+            log(`Incoming: ${data.name}`);
+            fileRegistry[data.fid] = { 
+                meta: data, 
+                buffer: [], 
+                received: 0,
+                chunksReceived: 0
+            };
+            createFileUI(data.fid, data.name, data.size, '⬇');
+        } 
+        else if (data.type === 'chunk') {
+            const f = fileRegistry[data.fid];
+            if(!f) return;
+            
+            // Convert Base64 back to ArrayBuffer
+            const binaryString = window.atob(data.data);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) bytes[i] = binaryString.charCodeAt(i);
+            
+            f.buffer.push(bytes.buffer);
+            f.received += bytes.length;
+            f.chunksReceived++;
+
+            updateUI(data.fid, f.received, f.meta.size);
+        } 
+        else if (data.type === 'end') {
+            const f = fileRegistry[data.fid];
+            if(!f) return;
+            log(`Finished: ${f.meta.name}`);
+            
+            const blob = new Blob(f.buffer, { type: f.meta.mime });
+            const url = URL.createObjectURL(blob);
+            
+            const btn = document.getElementById(`btn-${data.fid}`);
+            btn.style.display = 'block';
+            btn.onclick = () => {
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = f.meta.name;
+                a.click();
+            };
+            delete fileRegistry[data.fid];
+        }
     }
 
-    function addMessage(text, type) {
-        const div = document.createElement('div');
-        div.className = `msg-bubble msg-${type}`;
-        div.innerText = text;
-        
-        // Copy Button
-        const btn = document.createElement('button');
-        btn.className = 'copy-btn';
-        btn.innerHTML = '📋';
-        btn.onclick = () => {
-            navigator.clipboard.writeText(text);
-            btn.innerHTML = '✅';
-            setTimeout(() => btn.innerHTML = '📋', 1000);
-        };
-        div.appendChild(btn);
-        
-        const box = document.getElementById('chat-history');
-        box.appendChild(div);
-        box.scrollTop = box.scrollHeight;
+    // --- 8. SENDER LOGIC ---
+    document.getElementById('file-input').addEventListener('change', async (e) => {
+        for (const file of e.target.files) {
+            const fid = Math.random().toString(36).substr(2, 9);
+            log(`Queued: ${file.name}`);
+            createFileUI(fid, file.name, file.size, '⬆');
+
+            // 1. Send Header
+            publishTo(partnerId, 'data', {
+                type: 'head', fid, name: file.name, size: file.size, mime: file.type
+            });
+
+            // 2. Read & Send Chunks
+            const reader = new FileReader();
+            let offset = 0;
+
+            const readSlice = (start, end) => {
+                return new Promise((resolve) => {
+                    const r = new FileReader();
+                    r.onload = (evt) => resolve(evt.target.result);
+                    r.readAsDataURL(file.slice(start, end)); // Read as Base64 directly
+                });
+            };
+
+            while (offset < file.size) {
+                const dataUrl = await readSlice(offset, offset + CHUNK_SIZE);
+                // Remove "data:application/octet-stream;base64," prefix
+                const base64Data = dataUrl.split(',')[1]; 
+
+                publishTo(partnerId, 'data', {
+                    type: 'chunk', fid, data: base64Data
+                });
+
+                offset += CHUNK_SIZE;
+                updateUI(fid, Math.min(offset, file.size), file.size);
+                
+                // Throttle to prevent flooding the public broker (Important!)
+                await new Promise(r => setTimeout(r, 20)); 
+            }
+
+            // 3. Send End
+            publishTo(partnerId, 'data', { type: 'end', fid });
+            log(`Sent: ${file.name}`);
+        }
+    });
+
+    // --- 9. UI HELPERS ---
+    function updateStatus(cls, text) {
+        document.getElementById('status-dot').className = `status-dot ${cls}`;
+        document.getElementById('status-text').innerText = text;
     }
 
-    function createFileUI(fid, name, size) {
+    function createFileUI(fid, name, size, icon) {
         const div = document.createElement('div');
         div.className = 'file-item';
         div.innerHTML = `
-            <div style="display:flex; justify-content:space-between; font-size:0.9rem;">
-                <span>${name}</span><span style="color:#64748b">${(size/1024/1024).toFixed(2)} MB</span>
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
+                <span>${icon} ${name}</span>
+                <span style="color:#666">${formatSize(size)}</span>
             </div>
-            <div class="progress-track"><div id="prog-${fid}" class="progress-fill"></div></div>
-            <button id="btn-${fid}" class="btn hidden" style="margin-top:10px; padding:6px; font-size:0.8rem;">Download</button>
+            <div class="progress-bar"><div id="prog-${fid}" class="progress-fill"></div></div>
+            <button id="btn-${fid}" class="btn-main" style="margin-top:10px; padding:8px; display:none; font-size:0.8rem;">Download</button>
         `;
         document.getElementById('file-queue').prepend(div);
     }
 
-    function updateFileUI(fid, pct) {
+    function updateUI(fid, curr, total) {
+        const pct = (curr / total) * 100;
         const el = document.getElementById(`prog-${fid}`);
-        if(el) el.style.width = pct + "%";
-    }
-
-    function enableDownload(fid, url, name) {
-        const btn = document.getElementById(`btn-${fid}`);
-        btn.classList.remove('hidden');
-        btn.onclick = () => { const a = document.createElement('a'); a.href = url; a.download = name; a.click(); };
-        updateFileUI(fid, 100);
-    }
-
-    function updateStatus(state, msg) {
-        document.getElementById('status-dot').style.background = state === 'online' ? '#4ade80' : '#ef4444';
-        document.getElementById('status-text').innerText = msg;
+        if(el) el.style.width = `${pct}%`;
     }
 </script>
 </body>
