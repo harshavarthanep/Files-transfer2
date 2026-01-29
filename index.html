@@ -339,6 +339,13 @@
         const pId = document.getElementById('manual-partner-id').value.trim();
         const pPin = document.getElementById('manual-pin').value.trim();
         if(!pId || !pPin) return alert("Enter Partner ID and PIN");
+
+    // --- FIX STARTS HERE ---
+        if(pId === myId) {
+        alert("You cannot connect to yourself.");
+        return;
+        }
+    // --- FIX ENDS HERE ---
         
         partnerId = pId;
         await initialize(pPin);
