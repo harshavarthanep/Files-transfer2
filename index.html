@@ -189,6 +189,37 @@
 
         .hidden { display: none !important; }
         .divider { height: 1px; background: var(--border); width: 100%; margin: 20px 0; }
+
+        /* --- COPY BUTTON STYLES --- */
+        .msg {
+            position: relative; /* Ensure button stays inside message */
+            padding-right: 30px; /* Make space for the button */
+            }
+
+        .copy-btn {
+            position: absolute;
+            top: 50%;
+            right: 8px;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: inherit;
+            opacity: 0.4;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: 0.2s;
+        }
+
+/* Show button more clearly on hover */
+.msg:hover .copy-btn { opacity: 1; background: rgba(0,0,0,0.2); }
+
+/* SVG Icon size */
+.copy-btn svg { width: 14px; height: 14px; fill: currentColor; }
+        
     </style>
 </head>
 <body>
@@ -524,14 +555,58 @@
         document.querySelector(`button[onclick="switchTab('${tab}')"]`).classList.add('active');
     }
 
-    function addMessage(text, type) {
-        const div = document.createElement('div');
-        div.className = `msg msg-${type}`;
-        div.innerText = text;
-        const container = document.getElementById('chat-history');
-        container.appendChild(div);
-        container.scrollTop = container.scrollHeight;
-    }
+    // function addMessage(text, type) {
+    //     const div = document.createElement('div');
+    //     div.className = `msg msg-${type}`;
+    //     div.innerText = text;
+    //     const container = document.getElementById('chat-history');
+    //     container.appendChild(div);
+    //     container.scrollTop = container.scrollHeight;
+    // }
+
+    // Replace the old addMessage function with this one
+function addMessage(text, type) {
+const div = document.createElement('div');
+div.className = `msg msg-${type}`;
+
+// 1. Create a span for the text to keep it safe (prevents HTML injection)
+const textSpan = document.createElement('span');
+textSpan.innerText = text;
+div.appendChild(textSpan);
+
+// 2. Create the copy button
+const btn = document.createElement('button');
+btn.className = 'copy-btn';
+// SVG Icon for "Copy"
+btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>`;
+
+// 3. Add click event to copy clear text
+btn.onclick = () => copyToClipboard(text, btn);
+
+div.appendChild(btn);
+
+const container = document.getElementById('chat-history');
+container.appendChild(div);
+container.scrollTop = container.scrollHeight;
+}
+
+// Add this new helper function immediately after addMessage
+function copyToClipboard(text, btn) {
+navigator.clipboard.writeText(text).then(() => {
+// Visual feedback (change icon to checkmark briefly)
+const originalIcon = btn.innerHTML;
+btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`; // Checkmark
+btn.style.opacity = '1';
+
+setTimeout(() => {
+btn.innerHTML = originalIcon;
+btn.style.opacity = '';
+}, 2000);
+}).catch(err => {
+console.error('Failed to copy: ', err);
+});
+}
+Partner is typing...
 
     function createFileUI(fid, name, size) {
         const div = document.createElement('div');
